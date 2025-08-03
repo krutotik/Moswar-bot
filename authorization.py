@@ -1,16 +1,18 @@
 import pickle
-from pathlib import Path
-from selenium.webdriver.common.by import By
 from datetime import datetime
-from utils.human_simulation import random_delay
-from utils.custom_logging import logger
+from pathlib import Path
+
 from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.common.by import By
+
+from utils.custom_logging import logger
+from utils.human_simulation import random_delay
 
 
 # Function to login to the game
 def log_in(
     driver: WebDriver,
-    credentials: dict,
+    credentials: dict[str, str],
     cookies_file_path: str = "./cookies/cookies.pkl",
 ) -> WebDriver:
     """

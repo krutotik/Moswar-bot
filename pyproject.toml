@@ -13,5 +13,5 @@ typeCheckingMode = "strict"
 executionEnvironments = [
     { root = "./", extraPaths = [
         ".venv/lib/python3.12/site-packages/selenium",
-    ], reportUnknownMemberType = false },
+    ], reportUnknownMemberType = false, reportUnknownVariableType = false },
 ]
