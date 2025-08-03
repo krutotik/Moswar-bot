@@ -1,13 +1,13 @@
 from typing import Literal
-from tqdm import tqdm
 
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
+from tqdm import tqdm
 
-from utils.human_simulation import random_delay
-from utils.custom_logging import logger
 from entities.player import Player
+from utils.custom_logging import logger
+from utils.human_simulation import random_delay
 
 # TODO:
 # 2. use Enum for items in use_item function
@@ -213,7 +213,7 @@ class PetForFightMain:
 
         # Use items
         used_times = 0
-        for i in tqdm(range(times), desc=f"Using '{item}'"):
+        for _ in tqdm(range(times), desc=f"Using '{item}'"):
             try:
                 action_el.click()
                 used_times += 1

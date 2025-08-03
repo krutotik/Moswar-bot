@@ -1,35 +1,34 @@
-from dotenv import load_dotenv
 import os
-import time
-import re
 import random
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
+import re
+import time
 
-from configuration.configuration import set_options
+from dotenv import load_dotenv
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select, WebDriverWait
+from tqdm import tqdm, trange
+
 from authorization import log_in
-from locations.metro import Metro
+from configuration.configuration import set_options
+from entities.pets import PetForFightMain
+from entities.player import Player
+from general_functions import go_on_activities
 from locations.alley import Alley
 from locations.home import Home
 from locations.locations_secondary import (
-    Shaurburgers,
     Casino,
-    Police,
-    NightClub,
     Factory,
+    NightClub,
+    Police,
+    Shaurburgers,
     TrainerVip,
 )
-from entities.player import Player
-from entities.pets import PetForFightMain
-from general_functions import go_on_activities
-from tqdm import tqdm
-from tqdm import trange
+from locations.metro import Metro
 
 load_dotenv()
 

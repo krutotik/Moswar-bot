@@ -10,7 +10,7 @@ class LogFormatter(logging.Formatter):
         "RESET": "\033[39m",  # Reset color
     }
 
-    def format(self, record):
+    def format(self, record: logging.LogRecord):
         log_message = super().format(record)
         levelname = record.levelname
 
@@ -26,7 +26,6 @@ class LogFormatter(logging.Formatter):
 
 # Set up the logger
 def setup_logger():
-
     # Define the format to exclude milliseconds and use HH:MM:SS format
     formatter = LogFormatter(
         "%(asctime)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"

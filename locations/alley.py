@@ -1,15 +1,14 @@
+from typing import Optional
+
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
-from selenium.common.exceptions import WebDriverException
-from selenium.webdriver.support.ui import Select
-from utils.human_simulation import random_delay
-from utils.custom_logging import logger
+from selenium.webdriver.support.ui import Select, WebDriverWait
+
 from entities.player import Player
-from typing import Optional
+from utils.custom_logging import logger
+from utils.human_simulation import random_delay
 
 # TODO:
 # update description and docstrings
@@ -162,8 +161,7 @@ class Alley:
         random_delay()
 
         finished_enemy_search = False
-        while finished_enemy_search == False:
-
+        while not finished_enemy_search:
             player_stats_sum = (
                 self.player.health
                 + self.player.strength
