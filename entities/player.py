@@ -1,15 +1,13 @@
+import re
+
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from tqdm import tqdm
-import random
-import time
-import re
-from utils.human_simulation import random_delay
-from selenium.common.exceptions import NoSuchElementException
+
 from utils.custom_logging import logger
+from utils.human_simulation import random_delay
 
 # TODO: add find elements to make the code shorter like when I try to find sum of stats of the enemy
 
@@ -514,10 +512,10 @@ class Player:
         print("Текущие состояния игрока:")
         print(f"Текущее здоровье: {self.currenthp:,}")
         print(f"Максимальное здоровье: {self.currenthp_max:,}")
-        print(f"Процент здоровья: {self.currenthp_prc*100:.2f}%")
+        print(f"Процент здоровья: {self.currenthp_prc * 100:.2f}%")
         print(f"Текущая энергия: {self.currentmp:,}")
         print(f"Максимальная энергия: {self.currentmp_max:,}")
-        print(f"Процент энергии: {self.currentmp_prc*100:.2f}%")
+        print(f"Процент энергии: {self.currentmp_prc * 100:.2f}%")
         print("\n")
         print("Текущие базовые ресурсы игрока:")
         print(f"Тугрики: {self.money:,}")
@@ -530,7 +528,7 @@ class Player:
             f"Опыта до следующего уровня: {self.experience_needed_to_level - self.experience:,}"
         )
         print("\n")
-        print(f"Текущие активности игрока:")
+        print("Текущие активности игрока:")
         print(f"В бою: {'Да' if self.in_battle else 'Нет'}")
         print(f"В подземке: {'Да' if self.in_underground else 'Нет'}")
         print(f"Патрулирует: {'Да' if self.on_patrol else 'Нет'}")
