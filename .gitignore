@@ -1,0 +1,15 @@
+# Virtual environment
+venv/
+
+# Cookies
+cookies/
+
+# Cache
+__pycache__/
+.ipynb_checkpoints/
+
+# VSCode settings
+.vscode/
+
+# Secrets file
+.env
