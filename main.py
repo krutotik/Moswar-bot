@@ -51,8 +51,12 @@ player.show_info(show_all=True)
 
 # Alley fighting
 alley = Alley(player, driver)
+
 alley.open()
 alley.if_rest_timer()
+alley.is_on_patrol()
+alley.is_on_watch_patriot_TV()
+alley.reset_timer(ResetTimerType.ENERGY)
 alley.start_enemy_search(EnemySearchType.BY_LEVEL, enemy_level_min=16, enemy_level_max=16)
 
 
