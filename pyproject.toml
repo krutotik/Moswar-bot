@@ -15,3 +15,6 @@ executionEnvironments = [
         ".venv/lib/python3.12/site-packages/selenium",
     ], reportUnknownMemberType = false, reportUnknownVariableType = false },
 ]
+
+[tool.ruff]
+line-length = 110
