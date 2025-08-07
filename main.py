@@ -29,6 +29,7 @@ from locations.locations_secondary import (
     TrainerVip,
 )
 from locations.metro import Metro
+from schemas.alley import EnemySearchType, ResetTimerType
 
 load_dotenv()
 
@@ -36,18 +37,25 @@ options = set_options()
 driver = webdriver.Chrome(options=options)
 
 # Login
-login = os.getenv("LOGIN")
-password = os.getenv("PASSWORD")
+login = os.getenv("LOGIN", "default_login")
+password = os.getenv("PASSWORD", "default_password")
 credentials = {"login": login, "password": password}
 driver = log_in(driver, credentials)
 
 # Player (fix cookies expiration)
 player = Player(driver, update_info_on_init=True)
-player.use_item("Полезный пельмень", 140)
+# player.use_item("Полезный пельмень", 140)
 player.show_info(show_all=True)
+
+# player.update_patrol_status()
 
 # Alley fighting
 alley = Alley(player, driver)
+alley.open()
+alley.if_rest_timer()
+alley.start_enemy_search(EnemySearchType.BY_LEVEL, enemy_level_min=16, enemy_level_max=16)
+
+
 for i in tqdm(range(2), desc="Fighting enemies"):
     alley.fight_random_enemy_by_level(16, 16)
 
@@ -102,14 +110,10 @@ while True:
 
     # Generate a random sleep duration in seconds
     seconds_to_sleep = random.randint(41 * 60, 42 * 60)
-    print(
-        f"Sleeping for {seconds_to_sleep // 60} minutes and {seconds_to_sleep % 60} seconds."
-    )
+    print(f"Sleeping for {seconds_to_sleep // 60} minutes and {seconds_to_sleep % 60} seconds.")
 
     # Use trange to show progress bar during sleep
-    for _ in trange(
-        seconds_to_sleep, desc="Sleeping", unit="s", colour="cyan", leave=False
-    ):
+    for _ in trange(seconds_to_sleep, desc="Sleeping", unit="s", colour="cyan", leave=False):
         time.sleep(1)
 
 

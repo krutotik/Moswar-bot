@@ -1,3 +1,5 @@
+import re
+from math import e
 from typing import Optional
 
 from selenium.common.exceptions import NoSuchElementException
@@ -7,13 +9,13 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
 
 from entities.player import Player
+from schemas.alley import EnemySearchType, ResetTimerType
 from utils.custom_logging import logger
 from utils.human_simulation import random_delay
 
 # TODO:
 # update description and docstrings
-# add grab rat tail in metro
-# add check rat slots status check for a player
+# move adresses of buttons to dict at the top of the file
 
 
 class Alley:
@@ -51,6 +53,125 @@ class Alley:
             logger.info("Driver is already on the alley page, refreshing.")
             self.driver.refresh()
             random_delay()
+
+    # TIMERS
+    # TODO: fix function
+    def if_rest_timer(self) -> bool:
+        """
+        Checks if the player is currently resting based on the rest timer.
+        """
+        try:
+            timer_value = self.driver.find_element(By.CLASS_NAME, "timer").get_attribute("timer")
+            if timer_value and "-" not in timer_value:
+                logger.info("Player is currently resting.")
+                return True
+            else:
+                return False
+        except NoSuchElementException:
+            return False
+
+    def reset_timer(self, reset_timer_type: ResetTimerType) -> None:
+        """
+        Resets the rest timer by consuming a sneaker.
+        """
+        if not self.if_rest_timer():
+            logger.info("Player is not resting, no need to reset the timer.")
+            return None
+
+        if reset_timer_type == reset_timer_type.ENERGY:
+            logger.info("Resetting energy timer by using enegry.")
+            self.driver.find_element(By.XPATH, "//div[@onclick=\"cooldownReset('tonus');\"]").click()
+            random_delay()
+        elif reset_timer_type == reset_timer_type.SNICKERS:
+            logger.info("Resetting rest timer by using sneakers.")
+
+            if self.player.snickers == 0:
+                logger.error("Player has no sneakers to reset the timer.")
+                return None
+
+            self.driver.find_element(By.XPATH, "//div[@onclick=\"cooldownReset('snikers');\"]").click()
+            self.player.snickers -= 1
+            random_delay()
+
+    # FIGHTING SINGLE ENEMY
+    def _search_enemy_by_level(
+        self,
+        enemy_level_min: Optional[int] = None,
+        enemy_level_max: Optional[int] = None,
+    ) -> None:
+        """
+        TBA
+        """
+        if not self.player.is_major:
+            logger.error("Player is not a major, can't fight enemies by level.")
+            return None
+
+        # Show search bar if not displayed
+        is_displ = self.driver.find_element(By.ID, "search-enemy-bar").get_attribute("style")
+        if is_displ == "display: none;":
+            logger.info("Search enemy bar is hidden. Clicking to display it.")
+            self.driver.find_element(
+                By.XPATH, "//span[@class='dashedlink' and @onclick='toggleSearchEnemyBar();']"
+            ).click()
+            random_delay()
+
+        # Set enemy min level
+        enemy_level_min = enemy_level_min or self.player.level + 1
+        logger.info(f"Setting enemy minimum level to {enemy_level_min}.")
+        enemy_level_min_str = str(enemy_level_min)
+
+        set_enemy_level_min_el = self.driver.find_element(By.NAME, "minlevel")
+        curr_value_min = set_enemy_level_min_el.get_attribute("value")
+        if curr_value_min != enemy_level_min_str:
+            logger.info(f"Enemy minimum level is not {enemy_level_min_str}. Updating it.")
+            set_enemy_level_min_el.clear()
+            set_enemy_level_min_el.send_keys(enemy_level_min_str)
+            random_delay()
+
+        # Set enemy max level
+        enemy_level_max = enemy_level_max or self.player.level + 1
+        logger.info(f"Setting enemy maximum level to {enemy_level_max}.")
+        enemy_level_max_str = str(enemy_level_max)
+
+        set_enemy_level_max_el = self.driver.find_element(By.NAME, "maxlevel")
+        value_max = set_enemy_level_max_el.get_attribute("value")
+        if value_max != enemy_level_max_str:
+            logger.info(f"Enemy maximum level is not {enemy_level_max_str}. Updating it.")
+            set_enemy_level_max_el.clear()
+            set_enemy_level_max_el.send_keys(enemy_level_max_str)
+            random_delay()
+
+        self.driver.find_element(By.XPATH, '//div[contains(text(), "Искать противника")]').click()
+        random_delay()
+
+    def start_enemy_search(
+        self,
+        enemy_search_type: EnemySearchType,
+        enemy_level_min: Optional[int] = None,
+        enemy_level_max: Optional[int] = None,
+    ) -> None:
+        """
+        TBA
+        """
+        logger.info(f"Starting enemy search of type: {enemy_search_type}")
+
+        if self.if_rest_timer():
+            logger.error("Player is resting, can't start search")
+            return None
+
+        if enemy_search_type == enemy_search_type.WEAK:
+            self.driver.find_element(By.CSS_SELECTOR, ".button-big.btn.f1").click()
+            random_delay()
+        elif enemy_search_type == enemy_search_type.EQUAL:
+            self.driver.find_element(By.CSS_SELECTOR, ".button-big.btn.f2").click()
+            random_delay()
+        elif enemy_search_type == enemy_search_type.STRONG:
+            self.driver.find_element(By.CSS_SELECTOR, ".button-big.btn.f3").click()
+            random_delay()
+        elif enemy_search_type == enemy_search_type.BY_NAME:
+            pass
+        elif enemy_search_type == enemy_search_type.BY_LEVEL:
+            self._search_enemy_by_level(enemy_level_min, enemy_level_max)
 
     def fight_random_enemy_by_level(
         self,
@@ -104,9 +225,7 @@ class Alley:
                 return None
 
         # Show search bar if not displayed
-        is_displ = self.driver.find_element(By.ID, "search-enemy-bar").get_attribute(
-            "style"
-        )
+        is_displ = self.driver.find_element(By.ID, "search-enemy-bar").get_attribute("style")
         if is_displ == "display: none;":
             logger.info("Search enemy bar is hidden. Clicking to display it.")
             display_all_el = self.driver.find_element(
@@ -118,36 +237,28 @@ class Alley:
 
         # Set enemy min level
         if enemy_level_min is None:
-            logger.info(
-                "Enemy minimum level is not specified. Setting it to player level + 1."
-            )
+            logger.info("Enemy minimum level is not specified. Setting it to player level + 1.")
             enemy_level_min = self.player.level + 1
         enemy_level_min_str = str(enemy_level_min)
 
         set_enemy_level_min_el = self.driver.find_element(By.NAME, "minlevel")
         curr_value_min = set_enemy_level_min_el.get_attribute("value")
         if curr_value_min != enemy_level_min_str:
-            logger.info(
-                f"Enemy minimum level is not {enemy_level_min_str}. Updating it."
-            )
+            logger.info(f"Enemy minimum level is not {enemy_level_min_str}. Updating it.")
             set_enemy_level_min_el.clear()
             set_enemy_level_min_el.send_keys(enemy_level_min_str)
             random_delay()
 
         # Set enemy max level
         if enemy_level_max is None:
-            logger.info(
-                "Enemy maximum level is not specified. Setting it to player level + 1."
-            )
+            logger.info("Enemy maximum level is not specified. Setting it to player level + 1.")
             enemy_level_max = self.player.level + 1
         enemy_level_max_str = str(enemy_level_max)
 
         set_enemy_level_max_el = self.driver.find_element(By.NAME, "maxlevel")
         value_max = set_enemy_level_max_el.get_attribute("value")
         if value_max != enemy_level_max_str:
-            logger.info(
-                f"Enemy maximum level is not {enemy_level_max_str}. Updating it."
-            )
+            logger.info(f"Enemy maximum level is not {enemy_level_max_str}. Updating it.")
             set_enemy_level_max_el.clear()
             set_enemy_level_max_el.send_keys(enemy_level_max_str)
             random_delay()
@@ -180,9 +291,7 @@ class Alley:
             enemy_stats_sum = sum(enemy_stat_values)
 
             if enemy_stats_sum > player_stats_sum:
-                logger.warning(
-                    "Enemy stats are too high, trying to find another enemy."
-                )
+                logger.warning("Enemy stats are too high, trying to find another enemy.")
                 find_another_el = self.driver.find_element(
                     By.XPATH, '//a[contains(@href, "/alley/search/again/")]'
                 )
@@ -194,9 +303,7 @@ class Alley:
 
         # Attack enemy
         attack_enemy_el = WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located(
-                (By.XPATH, "//div[@class='button button-fight']")
-            )
+            EC.presence_of_element_located((By.XPATH, "//div[@class='button button-fight']"))
         )
         attack_enemy_el.click()
         random_delay()
@@ -248,9 +355,7 @@ class Alley:
 
         # Check if patrol is already started
         try:
-            leave_patrol_button = self.driver.find_element(
-                By.XPATH, '//*[@id="leave-patrol-button"]'
-            )
+            leave_patrol_button = self.driver.find_element(By.XPATH, '//*[@id="leave-patrol-button"]')
             self.player.on_patrol = True
             logger.error("Can't start the patrol, player is already in patrol.")
             return None
@@ -277,9 +382,7 @@ class Alley:
             caravan_el_1.click()
             random_delay()
 
-            caravan_el_2 = self.driver.find_element(
-                By.XPATH, "//*[contains(@onclick, '/desert/rob/')]"
-            )
+            caravan_el_2 = self.driver.find_element(By.XPATH, "//*[contains(@onclick, '/desert/rob/')]")
             caravan_el_2.click()
             random_delay()
 
@@ -288,9 +391,7 @@ class Alley:
             if result_text.startswith("К сожалению"):
                 logger.info("Caravan farm failed :(")
             else:
-                logger.info(
-                    f"Caravan farm successfully completed. Farmed {farmed_money}."
-                )
+                logger.info(f"Caravan farm successfully completed. Farmed {farmed_money}.")
             self.driver.get(self.BASE_URL)
             random_delay()
         except NoSuchElementException:
@@ -323,9 +424,7 @@ class Alley:
         # Start watching sessing if not already started
         try:
             select_watch_hours_el = Select(
-                self.driver.find_element(
-                    By.XPATH, '//*[@id="patriottvForm"]/div/select'
-                )
+                self.driver.find_element(By.XPATH, '//*[@id="patriottvForm"]/div/select')
             )
         except NoSuchElementException:
             logger.error(
@@ -336,9 +435,7 @@ class Alley:
         select_watch_hours_el.select_by_visible_text(watch_hours_str)
         random_delay()
 
-        start_watch_el = self.driver.find_element(
-            By.XPATH, '//*[@id="alley-patrol-button"]'
-        )
+        start_watch_el = self.driver.find_element(By.XPATH, '//*[@id="alley-patrol-button"]')
         start_watch_el.click()
         random_delay()
 
