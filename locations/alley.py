@@ -46,10 +46,15 @@ class Alley:
         "enemy_level_min": (By.NAME, "minlevel"),
         "enemy_level_max": (By.NAME, "maxlevel"),
         "enemy_level_find": (By.XPATH, '//div[contains(text(), "Искать противника")]'),
+        "enemy_name_input": "TBA",
+        "enemy_name_find": "TBA",
         # Patrol
+        "patrol_start_button": "TBA",
+        "patrol_leave_button": "TBA",
         "patrol_active": (By.XPATH, "//td[@class='label' and text()='Патрулирование:']"),
         "patrol_time_left": (By.XPATH, '//form[@class="patrol" and @id="patrolForm"]//p[@class="timeleft"]'),
         # Patriot TV
+        "TV_start_button": "TBA",
         "TV_active": (By.XPATH, "//td[@class='label' and text()='Просмотр:']"),
         "TV_time_left": (By.XPATH, '//form[@class="patrol" and @id="patriottvForm"]//p[@class="timeleft"]'),
     }
