@@ -72,12 +72,8 @@ class Alley:
 
     def reset_timer(self, reset_timer_type: ResetTimerType) -> None:
         """
-        Resets the rest timer by consuming a sneaker.
+        Resets the rest timer by using energy or snickers.
         """
-        if not self.if_rest_timer():
-            logger.info("Player is not resting, no need to reset the timer.")
-            return None
-
         if reset_timer_type == reset_timer_type.ENERGY:
             logger.info("Resetting energy timer by using enegry.")
             self.driver.find_element(By.XPATH, "//div[@onclick=\"cooldownReset('tonus');\"]").click()
@@ -155,10 +151,6 @@ class Alley:
         """
         logger.info(f"Starting enemy search of type: {enemy_search_type}")
 
-        if self.if_rest_timer():
-            logger.error("Player is resting, can't start search")
-            return None
-
         if enemy_search_type == enemy_search_type.WEAK:
             self.driver.find_element(By.CSS_SELECTOR, ".button-big.btn.f1").click()
             random_delay()
@@ -172,6 +164,9 @@ class Alley:
             pass
         elif enemy_search_type == enemy_search_type.BY_LEVEL:
             self._search_enemy_by_level(enemy_level_min, enemy_level_max)
+
+        if not self.driver.current_url.startswith(self.BASE_URL + "search/"):
+            logger.error("Failed to start enemy search, driver is not on the search page.")
 
     def fight_random_enemy_by_level(
         self,

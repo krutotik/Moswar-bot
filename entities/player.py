@@ -10,6 +10,7 @@ from utils.custom_logging import logger
 from utils.human_simulation import random_delay
 
 # TODO: add find elements to make the code shorter like when I try to find sum of stats of the enemy
+# TODO: add status of the player, searching< fighting, etc.
 
 
 class Player:
@@ -97,9 +98,7 @@ class Player:
         self.update_underground_status(is_refresh=False, verbose=False)
 
         if not update_info_on_init:
-            logger.warning(
-                "Player successfully initialized, however player info was not updated."
-            )
+            logger.warning("Player successfully initialized, however player info was not updated.")
         elif self.in_battle or self.in_underground:
             logger.warning(
                 "Player successfully initialized, however information about player status was not updated. Player is in battle or underground."
@@ -128,9 +127,7 @@ class Player:
             random_delay()
 
     # create dict and use setattr
-    def update_health_and_energy(
-        self, is_refresh: bool = True, verbose: bool = True
-    ) -> None:
+    def update_health_and_energy(self, is_refresh: bool = True, verbose: bool = True) -> None:
         """
         Updates the information about player's current health and energy levels.
 
@@ -145,24 +142,16 @@ class Player:
             random_delay()
 
         # Health
-        currenthp_el = self.driver.find_element(
-            By.XPATH, '//*[@id="personal"]//*[@id="currenthp"]'
-        )
+        currenthp_el = self.driver.find_element(By.XPATH, '//*[@id="personal"]//*[@id="currenthp"]')
         self.currenthp = float(currenthp_el.get_attribute("title") or 0)
-        currenthp_max_el = self.driver.find_element(
-            By.XPATH, '//*[@id="personal"]//*[@id="maxhp"]'
-        )
+        currenthp_max_el = self.driver.find_element(By.XPATH, '//*[@id="personal"]//*[@id="maxhp"]')
         self.currenthp_max = float(currenthp_max_el.get_attribute("title") or 0)
         self.currenthp_prc = self.currenthp / self.currenthp_max
 
         # Energy
-        currentmp_el = self.driver.find_element(
-            By.XPATH, '//*[@id="personal"]//*[@id="currenttonus"]'
-        )
+        currentmp_el = self.driver.find_element(By.XPATH, '//*[@id="personal"]//*[@id="currenttonus"]')
         self.currentmp = float(currentmp_el.text)
-        currentmp_max_el = self.driver.find_element(
-            By.XPATH, '//*[@id="personal"]//*[@id="maxenergy"]'
-        )
+        currentmp_max_el = self.driver.find_element(By.XPATH, '//*[@id="personal"]//*[@id="maxenergy"]')
         self.currentmp_max = float(currentmp_max_el.text)
         self.currentmp_prc = self.currentmp / self.currentmp_max
 
@@ -216,9 +205,7 @@ class Player:
         random_delay()
 
         try:
-            self.driver.find_element(
-                By.XPATH, "//p[contains(text(), 'Ваш статус мажора закончится')]"
-            )
+            self.driver.find_element(By.XPATH, "//p[contains(text(), 'Ваш статус мажора закончится')]")
             self.is_major = True
         except NoSuchElementException:
             self.is_major = False
@@ -239,9 +226,7 @@ class Player:
         }
 
         for recourse, addr in basic_recourses_addr_dict.items():
-            recourse_attr = self.driver.find_element(By.XPATH, addr).get_attribute(
-                "title"
-            )
+            recourse_attr = self.driver.find_element(By.XPATH, addr).get_attribute("title")
             if recourse_attr:
                 recourse_value = int(recourse_attr.split(" ")[1])
                 setattr(self, recourse, recourse_value)
@@ -296,9 +281,7 @@ class Player:
                 recourse_value = 0
             setattr(self, recourse, recourse_value)
 
-    def update_battle_status(
-        self, is_refresh: bool = True, verbose: bool = True
-    ) -> None:
+    def update_battle_status(self, is_refresh: bool = True, verbose: bool = True) -> None:
         """
         Updates the player's in-battle status.
 
@@ -324,9 +307,7 @@ class Player:
         if verbose:
             logger.info(f"In battle status: {self.in_battle}")
 
-    def update_underground_status(
-        self, is_refresh: bool = True, verbose: bool = True
-    ) -> None:
+    def update_underground_status(self, is_refresh: bool = True, verbose: bool = True) -> None:
         """
         Updates the player's in-underground status.
 
@@ -345,9 +326,7 @@ class Player:
             logger.info("Updating in undeground status.")
 
         try:
-            self.driver.find_element(
-                By.XPATH, "//span[@class='text' and text()='В туннелях метро']"
-            )
+            self.driver.find_element(By.XPATH, "//span[@class='text' and text()='В туннелях метро']")
             self.in_underground = True
         except NoSuchElementException:
             self.in_underground = False
@@ -370,9 +349,7 @@ class Player:
         random_delay()
 
         try:
-            self.driver.find_element(
-                By.XPATH, "//td[@class='label' and text()='Патрулирование:']"
-            )
+            self.driver.find_element(By.XPATH, "//td[@class='label' and text()='Патрулирование:']")
             self.on_patrol = True
         except NoSuchElementException:
             self.on_patrol = False
@@ -408,9 +385,7 @@ class Player:
         random_delay()
 
         try:
-            self.driver.find_element(
-                By.XPATH, "//td[@class='label' and text()='Просмотр:']"
-            )
+            self.driver.find_element(By.XPATH, "//td[@class='label' and text()='Просмотр:']")
             self.on_watch_patriot_TV = True
         except NoSuchElementException:
             self.on_watch_patriot_TV = False
@@ -447,26 +422,18 @@ class Player:
         random_delay()
 
         try:
-            self.driver.find_element(
-                By.XPATH, "//td[@class='label' and text()='Вкалываем:']"
-            )
+            self.driver.find_element(By.XPATH, "//td[@class='label' and text()='Вкалываем:']")
             self.on_work = True
         except NoSuchElementException:
             self.on_work = False
 
         # Work time left
         if self.on_work:
-            logger.warning(
-                "Cannot update how many hours left to work, player is working."
-            )
+            logger.warning("Cannot update how many hours left to work, player is working.")
         else:
             try:
-                select_work_minutes_el = Select(
-                    self.driver.find_element(By.NAME, "time")
-                )
-                remaining_time_el_text = [
-                    option.text for option in select_work_minutes_el.options
-                ][-1]
+                select_work_minutes_el = Select(self.driver.find_element(By.NAME, "time"))
+                remaining_time_el_text = [option.text for option in select_work_minutes_el.options][-1]
                 match = re.search(r"(\d+)", remaining_time_el_text)
                 if match:
                     self.work_time_left = int(match.group(1))
@@ -524,9 +491,7 @@ class Player:
         print(f"Мёд: {self.honey:,}")
         print("\n")
         print(f"Текущий уровень игрока: {self.level:,}")
-        print(
-            f"Опыта до следующего уровня: {self.experience_needed_to_level - self.experience:,}"
-        )
+        print(f"Опыта до следующего уровня: {self.experience_needed_to_level - self.experience:,}")
         print("\n")
         print("Текущие активности игрока:")
         print(f"В бою: {'Да' if self.in_battle else 'Нет'}")
@@ -647,15 +612,11 @@ class Player:
             random_delay()
             return None
         except NoSuchElementException:
-            logger.warning(
-                "Tried to use tonus bottle from inventory, but it's not available."
-            )
+            logger.warning("Tried to use tonus bottle from inventory, but it's not available.")
 
         # Try to find restore energy using ore
         try:
-            restore_energy_el = self.driver.find_element(
-                By.XPATH, '//span[@class="ruda"]'
-            )
+            restore_energy_el = self.driver.find_element(By.XPATH, '//span[@class="ruda"]')
             restore_energy_el.click()
             logger.info("Player energy restored using ore.")
             random_delay()
@@ -695,9 +656,7 @@ class Player:
         count_el = item_el.find_element(By.XPATH, "../*[@class='count']")
         count = int(count_el.text.replace("#", ""))
         if count < times:
-            logger.error(
-                f"Not enough '{item}' to use {times} times. There are only {count} available."
-            )
+            logger.error(f"Not enough '{item}' to use {times} times. There are only {count} available.")
             return None
 
         # Use items
