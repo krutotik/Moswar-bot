@@ -135,14 +135,14 @@ class Player:
         self.in_underground = False
         self.current_blocking_activity = None  # TODO: add enum for this?
 
-        # Player time left to do activities (TODO: add refresh of those values)
+        # Player time left to do activities
         self.patrol_time_left = 0
         self.work_time_left = 0
         self.TV_time_left = 0
 
         # Update player status
         self.open()
-        self.update_blocking_actvities_status(is_refresh=False)
+        self.update_actvities_status_blocking(is_refresh=False)
 
         if not update_info_on_init:
             logger.warning("Player successfully initialized, however player info was not updated.")
@@ -161,6 +161,7 @@ class Player:
             self.update_recourses_inventory()
             self.update_recourses_advanced()
             self.update_major_status()
+            self.update_actvities_status_non_blocking()
 
             logger.info("Player successfully initialized.")
 
@@ -378,37 +379,38 @@ class Player:
         # if not self.in_underground and self.current_blocking_activity == "underground":
         #     self.current_blocking_activity = None
 
-    def update_blocking_actvities_status(self, is_refresh: bool = True) -> None:
+    def update_actvities_status_blocking(self, is_refresh: bool = True) -> None:
         """
         Updates player blocking activities statuses.
         """
-        logger.info("Updating player blocking activities statuses.")
         self.is_in_battle(is_refresh)
         self.is_in_underground(is_refresh=False)
 
-        # TODO: finish
-        # def update_activity_statuses(self) -> None:
-        # """
-        # Updates player activity statuses using location classes.
-        # """
-        # from locations.alley import Alley
-        # from locations.locations_secondary import Shaurburgers
+    def update_actvities_status_non_blocking(self) -> None:
+        """
+        Updates player non-blocking activities statuses
+        """
+        from locations.alley import Alley
+        from locations.locations_secondary import Shaurburgers
 
-        # if self.in_battle or self.in_underground:
-        #     logger.error("Cannot update other status while in battle or underground.")
-        #     return
+        logger.info("Updating player non-blocking activities statuses.")
 
-        # alley = Alley(self, self.driver)
-        # alley.open()
-        # self.on_patrol = alley.is_patrol_active()
-        # self.patrol_time_left = alley.get_patrol_time_left()
-        # self.on_TV = alley.is_TV_active()
-        # self.TV_time_left = alley.get_TV_time_left()
+        self.update_actvities_status_blocking(is_refresh=False)
+        if self.in_battle or self.in_underground:
+            logger.error("Cannot update other statuses while in battle or underground.")
+            return
 
-        # work = Shaurburgers(self, self.driver)
-        # work.open()
-        # self.on_work = work.is_work_active()
-        # self.work_time_left = work.get_work_time_left()
+        alley = Alley(self, self.driver)
+        alley.open()
+        self.on_patrol = alley.is_patrol_active()
+        self.patrol_time_left = alley.get_patrol_time_left()
+        self.on_TV = alley.is_TV_active()
+        self.TV_time_left = alley.get_TV_time_left()
+
+        work = Shaurburgers(self, self.driver)
+        work.open()
+        self.on_work = work.is_work_active()
+        self.work_time_left = work.get_work_time_left()
 
     def show_info(self, show_all: bool = False) -> None:
         """
