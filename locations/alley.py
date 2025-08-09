@@ -123,15 +123,15 @@ class Alley:
             logger.info("Resetting energy timer by using enegry.")
 
             energy_cost = float(self.driver.find_element(*self.LOCATORS["rest_reset_enegry_cost"]).text)
-            if self.player.currentmp < energy_cost:
+            if self.player.mp_current < energy_cost:
                 logger.error(
-                    f"Not enough energy to reset the timer. Current energy: {self.player.currentmp}, required: {energy_cost}"
+                    f"Not enough energy to reset the timer. Current energy: {self.player.mp_current}, required: {energy_cost}"
                 )
                 return None
             else:
                 self.driver.find_element(*self.LOCATORS["rest_reset_enegry"]).click()
-                self.player.currentmp -= energy_cost
-                logger.info(f"Energy timer reset, current energy: {self.player.currentmp}")
+                self.player.mp_current -= energy_cost
+                logger.info(f"Energy timer reset, current energy: {self.player.mp_current}")
             random_delay()
 
         elif reset_timer_type == reset_timer_type.SNICKERS:
