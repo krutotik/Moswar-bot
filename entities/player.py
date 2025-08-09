@@ -320,41 +320,6 @@ class Player:
         # if not self.in_underground and self.current_blocking_activity == "underground":
         #     self.current_blocking_activity = None
 
-    def update_work_status(self) -> None:
-        """
-        Updates the player's work status and remaining work time.
-
-        Checks if the player is currently working and updates the `on_work` attribute.
-        If the player is not working, retrieves the remaining work time (in hours) and updates the `work_time_left` attribute.
-        Logs the work status and remaining time.
-        """
-        # Work status
-        logger.info("Updating work status.")
-        self.driver.get("https://www.moswar.ru/shaurburgers/")
-        random_delay()
-
-        try:
-            self.driver.find_element(By.XPATH, "//td[@class='label' and text()='Вкалываем:']")
-            self.on_work = True
-        except NoSuchElementException:
-            self.on_work = False
-
-        # Work time left
-        if self.on_work:
-            logger.warning("Cannot update how many hours left to work, player is working.")
-        else:
-            try:
-                select_work_minutes_el = Select(self.driver.find_element(By.NAME, "time"))
-                remaining_time_el_text = [option.text for option in select_work_minutes_el.options][-1]
-                match = re.search(r"(\d+)", remaining_time_el_text)
-                if match:
-                    self.work_time_left = int(match.group(1))
-            except NoSuchElementException:
-                self.work_time_left = 0  # change
-
-        logger.info(f"Work status: {self.on_work}")
-        logger.info(f"Work time left: {self.work_time_left} hours.")
-
     # TODO: fix this, it is not working
     def update_all_actvities_status(self) -> None:
         """
