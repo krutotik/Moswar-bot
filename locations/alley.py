@@ -1,5 +1,3 @@
-import re
-from math import e
 from typing import Literal, Optional
 
 from selenium.common.exceptions import NoSuchElementException
