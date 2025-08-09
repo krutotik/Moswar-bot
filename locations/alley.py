@@ -159,11 +159,16 @@ class Alley:
         enemy_level_max: Optional[int] = None,
     ) -> None:
         """
-        Start enemy search by level.
+        Search for an enemy by specifying minimum and maximum level.
 
         Parameters:
-            enemy_level_min (Optional[int]): Minimum level of the enemy to search for. Defaults to None.
-            enemy_level_max (Optional[int]): Maximum level of the enemy to search for. Defaults to None.
+            enemy_level_min (Optional[int]): Minimum level of the enemy to search for. If None, defaults to player level + 1.
+            enemy_level_max (Optional[int]): Maximum level of the enemy to search for. If None, defaults to player level + 1.
+
+        Behavior:
+            - Ensures the search bar is visible.
+            - Sets the min and max level fields.
+            - Initiates the search for an enemy within the specified level range.
         """
         if not self.player.is_major:
             logger.error("Player is not a major, can't fight enemies by level.")
@@ -211,6 +216,16 @@ class Alley:
     ) -> None:
         """
         Start an enemy search of the specified type.
+
+        Parameters:
+            enemy_search_type (EnemySearchType): Type of enemy search (weak, equal, strong, by name, by level).
+            enemy_level_min (Optional[int]): Minimum level for BY_LEVEL search. Defaults to player level + 1 if not provided.
+            enemy_level_max (Optional[int]): Maximum level for BY_LEVEL search. Defaults to player level + 1 if not provided.
+
+        Behavior:
+            - Checks if the player is resting.
+            - Initiates the appropriate search based on the type.
+            - Validates navigation to the search page.
         """
         logger.info(f"Starting enemy search of type: {enemy_search_type}")
 
@@ -310,7 +325,16 @@ class Alley:
 
     def start_patrol(self, patrol_minutes: Literal[20, 40] = 20) -> None:
         """
-        Start a patrol for the specified duration (20 or 40 minutes).
+        Start a patrol for the specified duration.
+
+        Parameters:
+            patrol_minutes (Literal[20, 40]): Duration of patrol in minutes. Must be 20 or 40.
+
+        Behavior:
+            - Checks for valid patrol duration and player status.
+            - Ensures enough patrol time is left.
+            - Selects patrol duration and starts patrol.
+            - Updates player status and logs the result.
         """
         logger.info(f"Starting patrol for {patrol_minutes} minutes.")
 
@@ -364,6 +388,12 @@ class Alley:
     def rob_caravan(self) -> None:
         """
         Attempt to rob the caravan if available.
+
+        Behavior:
+            - Checks if a caravan is available.
+            - Navigates through caravan robbing steps.
+            - Logs the result and updates player money if successful.
+            - Returns to the alley page after the attempt.
         """
         if not self.is_caravan_available():
             logger.error("No caravan available to rob.")
@@ -420,6 +450,15 @@ class Alley:
     def start_watching_TV(self, watch_hours: Literal[1] = 1) -> None:
         """
         Start a Patriot TV session for 1 hour if possible.
+
+        Parameters:
+            watch_hours (Literal[1]): Number of hours to watch. Only 1 is allowed.
+
+        Behavior:
+            - Checks for valid watch duration and player status.
+            - Ensures enough TV time is left.
+            - Selects watch duration and starts session.
+            - Updates player status and logs the result.
         """
         logger.info(f"Starting Patriot TV session for {watch_hours} hour(s).")
 

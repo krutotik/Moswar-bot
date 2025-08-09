@@ -56,6 +56,9 @@ alley.is_patrol_active()
 alley.get_patrol_time_left()
 alley.start_patrol(40)
 
+alley.is_caravan_available()
+alley.rob_caravan()
+
 alley.is_TV_active()
 alley.get_TV_time_left()
 alley.start_watching_TV(1)
@@ -68,12 +71,9 @@ alley.finish_enemy_search()
 
 for i in range(10):
     if alley.is_rest_active():
-        alley.reset_rest_timer(ResetTimerType.ENERGY)
+        alley.reset_rest_timer(ResetTimerType.SNICKERS)
     alley.start_enemy_search(EnemySearchType.BY_LEVEL, enemy_level_min=16, enemy_level_max=16)
     alley.finish_enemy_search()
-
-
-timer = driver.find_element(By.XPATH, "//span[@class='timer' and contains(@trigger, 'end_alley_cooldown')]")
 
 
 # Casino test
