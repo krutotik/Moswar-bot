@@ -13,16 +13,18 @@ from utils.human_simulation import random_delay
 
 # TODO:
 # update description and docstrings
+# address TODOs in the code
+# add противостояние
 
 
 class Alley:
     """
-    Represents the 'Alley' in the game and provides methods for interacting with it.
+    Represents the 'Alley' location in the game, providing methods for interacting with its features such as timers, enemy search, patrol, caravan, and Patriot TV.
 
     Attributes:
-        player: The player object representing the user in the game.
-        driver: The Selenium WebDriver instance used for navigating and interacting with web elements.
-        BASE_URL: The base URL for the Alley page.
+        player: Player object representing the user.
+        driver: Selenium WebDriver for browser automation.
+        BASE_URL: Base URL for the Alley page.
     """
 
     # TODO: optimize locators if possible
@@ -84,7 +86,7 @@ class Alley:
 
     def open(self) -> None:
         """
-        This method ensures the driver is on the alley page by navigating to its URL.
+        Ensure the driver is on the alley page, navigating or refreshing as needed.
         """
         if self.driver.current_url != self.BASE_URL:
             logger.info("Driver is not on the alley page. Going to the alley.")
@@ -98,7 +100,7 @@ class Alley:
     # FIGHTING SINGLE ENEMY
     def is_rest_active(self) -> bool:
         """
-        Checks if the player is currently resting.
+        Return True if the player is currently resting, else False.
         """
         timer_value = self.driver.find_element(*self.LOCATORS["rest_timer"]).get_attribute("timer")
         if timer_value and timer_value.count("-") > 0:
@@ -110,7 +112,7 @@ class Alley:
 
     def reset_rest_timer(self, reset_timer_type: ResetTimerType) -> None:
         """
-        Resets the rest timer by using energy or snickers.
+        Reset the rest timer using energy or snickers, if possible.
         """
         if not self.is_rest_active():
             logger.error("Player is not resting, can't reset the timer.")
@@ -208,7 +210,7 @@ class Alley:
         enemy_level_max: Optional[int] = None,
     ) -> None:
         """
-        TBA
+        Start an enemy search of the specified type.
         """
         logger.info(f"Starting enemy search of type: {enemy_search_type}")
 
@@ -240,7 +242,7 @@ class Alley:
     # TODO: add check if on search page
     def finish_enemy_search(self) -> None:
         """
-        TBA
+        Complete the enemy search and attack a suitable enemy.
         """
         player_stats_sum = (
             self.player.health
@@ -282,7 +284,7 @@ class Alley:
     # PATROL
     def is_patrol_active(self) -> bool:
         """
-        Checks if the player is currently on patrol.
+        Return True if the player is currently on patrol, else False.
         """
         try:
             self.driver.find_element(*self.LOCATORS["patrol_active"])
@@ -295,7 +297,7 @@ class Alley:
     # TODO: check if correct when no time left
     def get_patrol_time_left(self) -> int:
         """
-        Returns the remaining patrol time in minutes.
+        Get the remaining patrol time in minutes.
         """
         try:
             time_left_el = self.driver.find_element(*self.LOCATORS["patrol_time_left"])
@@ -308,7 +310,7 @@ class Alley:
 
     def start_patrol(self, patrol_minutes: Literal[20, 40] = 20) -> None:
         """
-        TBA
+        Start a patrol for the specified duration (20 or 40 minutes).
         """
         logger.info(f"Starting patrol for {patrol_minutes} minutes.")
 
@@ -351,7 +353,7 @@ class Alley:
     # TODO: test caravan functions
     def is_caravan_available(self) -> bool:
         """
-        Checks if a caravan is available in the alley.
+        Return True if a caravan is available to rob, else False.
         """
         try:
             self.driver.find_element(*self.LOCATORS["caravan_available"])
@@ -361,7 +363,7 @@ class Alley:
 
     def rob_caravan(self) -> None:
         """
-        Attempts to rob the caravan if available.
+        Attempt to rob the caravan if available.
         """
         if not self.is_caravan_available():
             logger.error("No caravan available to rob.")
@@ -390,7 +392,7 @@ class Alley:
     # PATRIOT TV
     def is_TV_active(self) -> bool:
         """
-        Checks if the player is currently watching Patriot TV.
+        Return True if the player is currently watching Patriot TV, else False.
         """
         try:
             self.driver.find_element(*self.LOCATORS["TV_active"])
@@ -403,7 +405,7 @@ class Alley:
     # TODO: check if correct
     def get_TV_time_left(self) -> int:
         """
-        Returns the remaining Patriot TV watching time in minutes.
+        Get the remaining Patriot TV watching time in minutes.
         """
         try:
             time_left_el = self.driver.find_element(*self.LOCATORS["TV_time_left"])
@@ -417,7 +419,7 @@ class Alley:
     # TODO: check if correct
     def start_watching_TV(self, watch_hours: Literal[1] = 1) -> None:
         """
-        TBA
+        Start a Patriot TV session for 1 hour if possible.
         """
         logger.info(f"Starting Patriot TV session for {watch_hours} hour(s).")
 
