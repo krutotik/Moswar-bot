@@ -37,6 +37,22 @@ class Player:
         "oil": (By.XPATH, "//li[@class='neft-block']"),
         "honey": (By.XPATH, "//li[@class='med-block']"),
         # Player advanced resources
+        "base": (By.XPATH, "//div[contains(text(), 'У вас в наличии:')]"),
+        "mobiles": (By.XPATH, "//span[@class='mobila']"),
+        "stars": (By.XPATH, "//span[@class='star']"),
+        "hunter_tokens": (By.XPATH, "//span[@class='badge']"),
+        "tooth_white": (By.XPATH, "//span[@class='tooth-white']"),
+        "pet_medals": (By.XPATH, "//span[@class='pet-golden counter']"),
+        "powers": (By.XPATH, "//span[@class='power counter']"),
+        "patriotisms": (By.XPATH, "//span[@class='patriotism_points']"),
+        "debts": (By.XPATH, "//span[@class='debt_points']"),
+        # Player inventory resources
+        "pielmienies": (
+            By.XPATH,
+            '//*[@id="inventory-stat_stimulator-btn"]/parent::div//div[@class="count"]',
+        ),
+        "tonuses": (By.XPATH, '//*[@id="inventory-restoretonus-btn"]/parent::div//div[@class="count"]'),
+        "snickers": (By.XPATH, '//*[@id="inventory-snikers-btn"]/parent::div//div[@class="count"]'),
     }
 
     def __init__(self, driver: WebDriver, update_info_on_init: bool = True):
@@ -128,9 +144,9 @@ class Player:
             )
         else:
             self.update_health_and_energy(is_refresh=False)
-            self.update_stats()
-            self.update_recourses_active()
             self.update_recourses_basic()
+            self.update_stats()
+            self.update_recourses_inventory()
             self.update_recourses_advanced()
             self.update_major_status()
             self.update_all_actvities_status()
@@ -238,62 +254,59 @@ class Player:
         """
         Updates the information about player's basic resources, including money, ore, oil, and honey.
         """
-        basic_recourses_list = ["money", "ore", "oil", "honey"]
-        for recourse in basic_recourses_list:
-            recourse_attr = self.driver.find_element(*self.LOCATORS[recourse]).get_attribute("title")
-            if recourse_attr:
-                recourse_value = int(recourse_attr.split(" ")[1])
-                setattr(self, recourse, recourse_value)
+        basic_recourses = ["money", "ore", "oil", "honey"]
+        for recourse in basic_recourses:
+            try:
+                recourse_attr = self.driver.find_element(*self.LOCATORS[recourse]).get_attribute("title")
+                value = int(recourse_attr.split(" ")[1]) if recourse_attr else 0
+            except NoSuchElementException:
+                value = 0
+            setattr(self, recourse, value)
 
-    # TODO: add travel_passes, moskowpoly_dices, casino_chips
+    # TODO: add casino_chips
     def update_recourses_advanced(self) -> None:
         """
         Updates the information about player's advanced resources, including mobiles, stars, hunter tokens, and others.
+        TODO: potentially move to separate location classes
         """
         logger.info("Updating player advanced recourses info.")
         self.driver.get("https://www.moswar.ru/berezka/")
         random_delay()
 
-        general_address = "//div[contains(text(), 'У вас в наличии:')]//span[@class="
-        advanced_recourses_addr_dict = {
-            "mobiles": general_address + "'mobila']",
-            "stars": general_address + "'star']",
-            "hunter_tokens": general_address + "'badge']",
-            "tooth_white": general_address + "'tooth-white']",
-            "pet_medals": general_address + "'pet-golden counter']",
-            "powers": general_address + "'power counter']",
-            "patriotisms": general_address + "'patriotism_points']",
-            "debts": general_address + "'debt_points']",
-        }
+        base_xpath = self.LOCATORS["base"][1]
+        advanced_recourses = [
+            "mobiles",
+            "stars",
+            "hunter_tokens",
+            "tooth_white",
+            "pet_medals",
+            "powers",
+            "patriotisms",
+            "debts",
+        ]
 
-        for recourse, addr in advanced_recourses_addr_dict.items():
-            recourse_el = self.driver.find_element(By.XPATH, addr)
-            recourse_value = int(recourse_el.text.replace(",", ""))
-            setattr(self, recourse, recourse_value)
-
-    def update_recourses_active(self) -> None:
-        """
-        Updates the player's active resources (Pielmienies, Tonuses, Snickers) by retrieving
-        their counts from the webpage. If an element is not found, the count is set to 0.
-
-        """
-        logger.info("Updating player active recourses info.")
-        self.open()
-
-        # TODO: move to class attributes to be able to use this items using use_item function
-        active_recourses_addr_dict = {
-            "pielmienies": "//*[@id='inventory-stat_stimulator-btn']/parent::div//div[@class='count']",
-            "tonuses": "//*[@id='inventory-restoretonus-btn']/parent::div//div[@class='count']",
-            "snickers": "//*[@id='inventory-snikers-btn']/parent::div//div[@class='count']",
-        }
-
-        for recourse, addr in active_recourses_addr_dict.items():
+        for recourse in advanced_recourses:
             try:
-                recourse_el = self.driver.find_element(By.XPATH, addr)
-                recourse_value = int(recourse_el.text.replace("#", ""))
+                xpath = base_xpath + self.LOCATORS[recourse][1]
+                value = int(self.driver.find_element(By.XPATH, xpath).text.replace(",", ""))
+            except Exception:
+                value = 0
+            setattr(self, recourse, value)
+
+    # TODO: travel_passes, moskowpoly_dices,
+    def update_recourses_inventory(self) -> None:
+        """
+        Updates player's resources which can be found only in the inventory.
+        """
+        logger.info("Updating player inventory recourses info.")
+        inventory_recourses = ["pielmienies", "tonuses", "snickers"]
+
+        for recourse in inventory_recourses:
+            try:
+                value = int(self.driver.find_element(*self.LOCATORS[recourse]).text.replace("#", ""))
             except NoSuchElementException:
-                recourse_value = 0
-            setattr(self, recourse, recourse_value)
+                value = 0
+            setattr(self, recourse, value)
 
     def is_in_battle(self, is_refresh: bool = False) -> bool:
         """
@@ -369,12 +382,8 @@ class Player:
             show_all (bool): If True, displays additional player details. Default is False.
         """
         print("Текущие состояния игрока:")
-        print(f"Текущее здоровье: {self.hp_current:,}")
-        print(f"Максимальное здоровье: {self.hp_max:,}")
-        print(f"Процент здоровья: {self.hp_current_prc * 100:.2f}%")
-        print(f"Текущая энергия: {self.mp_current:,}")
-        print(f"Максимальная энергия: {self.mp_max:,}")
-        print(f"Процент энергии: {self.mp_current_prc * 100:.2f}%")
+        print(f"Здоровье: {self.hp_current:,}/{self.hp_max:,} ({self.hp_current_prc * 100:.2f}%)")
+        print(f"Энергия: {self.mp_current:,}/{self.mp_max:,} ({self.mp_current_prc * 100:.2f}%)")
         print("\n")
         print("Текущие базовые ресурсы игрока:")
         print(f"Тугрики: {self.money:,}")
@@ -410,15 +419,15 @@ class Player:
             print(f"Державы: {self.powers:,}")
             print(f"Патриотизм: {self.patriotisms:,}")
             print(f"Долги: {self.debts:,}")
-            print(f"(Кругосветка) Смена босса: {self.travel_shuffles:,}")
-            print(f"(Кругосветка) Праймари пассы: {self.travel_passes:,}")
-            print(f"Кубики Москвополии: {self.moskowpoly_dices:,}")
             print(f"Фишки в казино: {self.casino_chips:,}")
             print("\n")
-            print("Текущие активные ресурсы игрока:")
+            print("Текущие ресурсы игрока  из инвенторя:")
             print(f"Пельмени: {self.pielmienies:,}")
             print(f"Тонусы: {self.tonuses:,}")
             print(f"Сникерсы: {self.snickers:,}")
+            print(f"(Кругосветка) Смена босса: {self.travel_shuffles:,}")
+            print(f"(Кругосветка) Праймари пассы: {self.travel_passes:,}")
+            print(f"Кубики Москвополии: {self.moskowpoly_dices:,}")
             print("\n")
             print("Текущие характеристики игрока:")
             print(f"Здоровье: {self.health:,}")
