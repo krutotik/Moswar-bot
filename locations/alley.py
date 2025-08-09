@@ -1,3 +1,5 @@
+import re
+from math import e
 from typing import Literal, Optional
 
 from selenium.common.exceptions import NoSuchElementException
@@ -29,9 +31,9 @@ class Alley:
     BASE_URL = "https://www.moswar.ru/alley/"
     LOCATORS = {
         # Timers
-        "timer": (By.CLASS_NAME, "timer"),
-        "reset_timer_energy": (By.XPATH, "//div[@onclick=\"cooldownReset('tonus');\"]"),
-        "reset_timer_snikers": (By.XPATH, "//div[@onclick=\"cooldownReset('snikers');\"]"),
+        "rest_timer": (By.XPATH, "//span[@class='timer' and contains(@trigger, 'end_alley_cooldown')]"),
+        "rest_reset_enegry": (By.XPATH, "//div[@onclick=\"cooldownReset('tonus');\"]"),
+        "rest_reset_snikers": (By.XPATH, "//div[@onclick=\"cooldownReset('snikers');\"]"),
         # Enemy search
         "enemy_weak": (By.CSS_SELECTOR, ".button-big.btn.f1"),
         "enemy_equal": (By.CSS_SELECTOR, ".button-big.btn.f2"),
@@ -87,29 +89,30 @@ class Alley:
             self.driver.refresh()
             random_delay()
 
-    # TIMERS
-    # TODO: fix function
-    def if_rest_timer(self) -> bool:
+    # FIGHTING SINGLE ENEMY
+    def is_rest_active(self) -> bool:
         """
-        Checks if the player is currently resting based on the rest timer.
+        Checks if the player is currently resting.
         """
-        try:
-            timer_value = self.driver.find_element(By.CLASS_NAME, "timer").get_attribute("timer")
-            if timer_value and "-" not in timer_value:
-                logger.info("Player is currently resting.")
-                return True
-            else:
-                return False
-        except NoSuchElementException:
+        timer_value = self.driver.find_element(*self.LOCATORS["rest_timer"]).get_attribute("timer")
+        if timer_value and timer_value.count("-") > 0:
+            self.player.on_rest = False
             return False
+        else:
+            self.player.on_rest = True
+            return True
 
     def reset_timer(self, reset_timer_type: ResetTimerType) -> None:
         """
         Resets the rest timer by using energy or snickers.
         """
+        if not self.is_rest_active():
+            logger.error("Player is not resting, can't reset the timer.")
+            return None
+
         if reset_timer_type == reset_timer_type.ENERGY:
             logger.info("Resetting energy timer by using enegry.")
-            self.driver.find_element(*self.LOCATORS["reset_timer_energy"]).click()
+            self.driver.find_element(*self.LOCATORS["rest_reset_enegry"]).click()
             random_delay()
         elif reset_timer_type == reset_timer_type.SNICKERS:
             logger.info("Resetting rest timer by using sneakers.")
@@ -118,11 +121,17 @@ class Alley:
                 logger.error("Player has no sneakers to reset the timer.")
                 return None
 
-            self.driver.find_element(*self.LOCATORS["reset_timer_snikers"]).click()
+            self.driver.find_element(*self.LOCATORS["rest_reset_snikers"]).click()
             self.player.snickers -= 1
             random_delay()
 
-    # FIGHTING SINGLE ENEMY
+        random_delay(min_time=5, max_time=6)
+        self.driver.refresh()
+        if not self.is_rest_active():
+            logger.info("Rest timer successfully reset.")
+        else:
+            logger.error("Failed to reset rest timer, player is still resting.")
+
     def _search_enemy_by_level(
         self,
         enemy_level_min: Optional[int] = None,
@@ -186,6 +195,10 @@ class Alley:
         """
         logger.info(f"Starting enemy search of type: {enemy_search_type}")
 
+        if self.is_rest_active():
+            logger.error("Player is resting, can't start enemy search.")
+            return None
+
         if enemy_search_type == enemy_search_type.WEAK:
             self.driver.find_element(*self.LOCATORS["enemy_weak"]).click()
             random_delay()
@@ -202,38 +215,6 @@ class Alley:
 
         if not self.driver.current_url.startswith(self.BASE_URL + "search/"):
             logger.error("Failed to start enemy search, driver is not on the search page.")
-
-    # def fight_random_enemy_by_level(
-    #     self,
-    #     enemy_level_min: Optional[int] = None,
-    #     enemy_level_max: Optional[int] = None,
-    # ) -> None:
-    #     """
-    #     Finds and fights a random enemy in the alley.
-
-    #     Behavior:
-    #         1. Ensures the driver is on the alley page.
-    #         2. Checks and resets the rest timer if necessary.
-    #         3. Ensures the enemy search bar is displayed.
-    #         4. Sets the minimum and maximum enemy levels to predefined values.
-    #         5. Finds an enemy and initiates an attack.
-    #         6. Returns the driver to the alley page after the fight.
-    #     """
-    #     logger.info("Starting fight with random enemy by level.")
-
-    #     if self.driver.current_url != self.BASE_URL:
-    #         self.open()
-
-    #     # Check if player is a major
-    #     if not self.player.is_major:
-    #         logger.error("Player is not a major, can't fight enemies by level.")
-    #         return None
-
-    #     # Restore heath if not full
-    #     self.player.update_health_and_energy(is_refresh=False, verbose=False)
-    #     if self.player.currenthp_prc != 1.0:
-    #         logger.info("Player health is not full. Restoring health.")
-    #         self.player.restore_health()
 
     #     # Reset rest timer if needed
     #     timer_el = self.driver.find_element(By.CLASS_NAME, "timer")
@@ -370,7 +351,7 @@ class Alley:
         self.player.patrol_time_left = time_left
         return time_left
 
-    def start_patrol(self, patrol_minutes: Literal[20, 40]) -> None:
+    def start_patrol(self, patrol_minutes: Literal[20, 40] = 20) -> None:
         """
         TBA
         """
@@ -380,11 +361,12 @@ class Alley:
             logger.error("Invalid patrol minutes. Valid options are 20 or 40 minutes.")
             return None
 
-        if self.player.on_patrol:
+        if self.is_patrol_active():
             logger.error("Can't start patrol, player is already on patrol.")
             return None
 
-        if self.player.patrol_time_left < patrol_minutes:
+        patrol_time_left = self.get_patrol_time_left()
+        if patrol_time_left < patrol_minutes:
             logger.error(
                 f"Can't start patrol for {patrol_minutes} minutes, only {self.player.patrol_time_left} minutes left."
             )
@@ -400,7 +382,6 @@ class Alley:
         random_delay(min_time=5, max_time=6)
 
         if self.is_patrol_active():
-            self.player.on_patrol = True
             self.player.patrol_time_left -= patrol_minutes
             logger.info(
                 f"Patrol successfully started, patrol time left: {self.player.patrol_time_left} minutes."
@@ -476,7 +457,7 @@ class Alley:
         return time_left
 
     # TODO: check if correct
-    def start_watching_TV(self, watch_hours: Literal[1]) -> None:
+    def start_watching_TV(self, watch_hours: Literal[1] = 1) -> None:
         """
         TBA
         """
@@ -486,11 +467,12 @@ class Alley:
             logger.error("Invalid watch hours. Only 1 hour is allowed.")
             return None
 
-        if self.player.on_TV:
+        if self.is_TV_active():
             logger.error("Can't start watching Patriot TV, player is already watching.")
             return None
 
-        if self.player.TV_time_left < watch_hours:
+        watch_time_left = self.get_TV_time_left()
+        if watch_time_left < watch_hours:
             logger.error(
                 f"Can't start watching Patriot TV for {watch_hours} hour(s), only {self.player.TV_time_left} hours left."
             )
@@ -505,7 +487,6 @@ class Alley:
         random_delay(min_time=5, max_time=6)
 
         if self.is_TV_active():
-            self.player.on_TV = True
             self.player.TV_time_left -= watch_hours
             logger.info(
                 f"Patriot TV session successfully started, time left: {self.player.TV_time_left} hours."
