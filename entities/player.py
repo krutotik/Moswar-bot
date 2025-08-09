@@ -57,10 +57,10 @@ class Player:
         # Player health and energy
         self.hp_max = 0.0
         self.hp_current = 0.0
-        self.hp_current_prc = 0.0
+        self.hp_current_prc = 1.0
         self.mp_max = 0.0
         self.mp_current = 0.0
-        self.mp_current_prc = 0.0
+        self.mp_current_prc = 1.0
 
         # Player stats
         self.health = 0
@@ -136,6 +136,24 @@ class Player:
             self.update_all_actvities_status()
             logger.info("Player successfully initialized.")
 
+    def __setattr__(self, name: str, value: float):
+        # HP prc auto update
+        object.__setattr__(self, name, value)
+        if name == "hp_current":
+            hp_max = getattr(self, "hp_max", None)
+            if hp_max and hp_max != 0:
+                object.__setattr__(self, "hp_current_prc", value / hp_max)
+            else:
+                object.__setattr__(self, "hp_current_prc", 1.0)
+
+        # MP prc auto update
+        if name == "mp_current":
+            mp_max = getattr(self, "mp_max", None)
+            if mp_max and mp_max != 0:
+                object.__setattr__(self, "mp_current_prc", value / mp_max)
+            else:
+                object.__setattr__(self, "mp_current_prc", 1.0)
+
     def open(self) -> None:
         """
         This method ensures the driver is on the player page by navigating to its URL.
@@ -149,7 +167,9 @@ class Player:
             self.driver.refresh()
             random_delay()
 
-    # create dict and use setattr
+    # ------------------------
+    # PLAYER INFO UPDATES
+    # ------------------------
     def update_health_and_energy(self, is_refresh: bool = True) -> None:
         """
         Updates the information about player's current health and energy levels.
@@ -409,6 +429,9 @@ class Player:
             print(f"Внимательность: {self.attention:,}")
             print(f"Харизма: {self.charism:,}")
 
+    # ------------------------
+    # PLAYER ACTIONS
+    # ------------------------
     def restore_health(self) -> None:
         """
         Restores the player's health if it's not already at full.

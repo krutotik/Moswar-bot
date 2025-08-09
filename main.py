@@ -34,13 +34,15 @@ credentials = {"login": login, "password": password}
 driver = log_in(driver, credentials)
 
 # Player test
-player = Player(driver, update_info_on_init=False)
+player = Player(driver, update_info_on_init=True)
 player.update_health_and_energy()
 player.update_stats()
 player.update_major_status()
 player.open()
 player.update_recourses_basic()
 
+player.mp_current
+player.mp_current_prc
 
 # player.use_item("Полезный пельмень", 140)
 player.show_info(show_all=True)
