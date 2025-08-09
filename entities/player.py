@@ -170,11 +170,17 @@ class Player:
             else:
                 object.__setattr__(self, "mp_current_prc", 1.0)
 
+    def is_opened(self) -> bool:
+        """
+        Checks if the current driver URL is the player page.
+        """
+        return self.driver.current_url == self.BASE_URL
+
     def open(self) -> None:
         """
         This method ensures the driver is on the player page by navigating to its URL.
         """
-        if self.driver.current_url != self.BASE_URL:
+        if not self.is_opened():
             logger.info("Driver is not on the player page. Going to the player.")
             self.driver.get(self.BASE_URL)
             random_delay()
@@ -214,6 +220,10 @@ class Player:
         intuition, attention, charism, level, and experience.
         """
         logger.info("Updating player stats info.")
+
+        if not self.is_opened():
+            logger.error("Cannot update player stats, driver is not on the player page.")
+            return None
 
         # Stats
         stats_list = ["health", "strength", "dexterity", "resistance", "intuition", "attention", "charism"]
@@ -293,14 +303,17 @@ class Player:
                 value = 0
             setattr(self, recourse, value)
 
-    # TODO: travel_passes, moskowpoly_dices,
+    # TODO: travel_passes, moskowpoly_dices, irons
     def update_recourses_inventory(self) -> None:
         """
         Updates player's resources which can be found only in the inventory.
         """
         logger.info("Updating player inventory recourses info.")
-        inventory_recourses = ["pielmienies", "tonuses", "snickers"]
+        if not self.is_opened():
+            logger.error("Cannot update player inventory recourses, driver is not on the player page.")
+            return None
 
+        inventory_recourses = ["pielmienies", "tonuses", "snickers"]
         for recourse in inventory_recourses:
             try:
                 value = int(self.driver.find_element(*self.LOCATORS[recourse]).text.replace("#", ""))

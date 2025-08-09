@@ -40,12 +40,11 @@ player.update_stats()
 player.update_major_status()
 player.open()
 player.update_recourses_basic()
-
-player.mp_current
-player.mp_current_prc
+player.update_recourses_advanced()
+player.update_recourses_inventory()
+player.show_info(show_all=True)
 
 # player.use_item("Полезный пельмень", 140)
-player.show_info(show_all=True)
 
 
 # Alley test
