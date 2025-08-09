@@ -102,7 +102,7 @@ class Alley:
             self.player.on_rest = True
             return True
 
-    def reset_timer(self, reset_timer_type: ResetTimerType) -> None:
+    def reset_rest_timer(self, reset_timer_type: ResetTimerType) -> None:
         """
         Resets the rest timer by using energy or snickers.
         """
