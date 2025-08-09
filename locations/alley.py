@@ -95,7 +95,9 @@ class Alley:
             self.driver.refresh()
             random_delay()
 
+    # ------------------------
     # FIGHTING SINGLE ENEMY
+    # ------------------------
     def is_rest_active(self) -> bool:
         """
         Return True if the player is currently resting, else False.
@@ -299,7 +301,9 @@ class Alley:
         money_after = self.player.money
         logger.info(f"Finished fight with random enemy. Earned money: {(money_after - money_before):,}")
 
+    # ------------------------
     # PATROL
+    # ------------------------
     def is_patrol_active(self) -> bool:
         """
         Return True if the player is currently on patrol, else False.
@@ -376,7 +380,9 @@ class Alley:
         else:
             logger.error("Failed to start patrol")
 
+    # ------------------------
     # CARAVAN
+    # ------------------------
     # TODO: test caravan functions
     def is_caravan_available(self) -> bool:
         """
@@ -428,7 +434,9 @@ class Alley:
 
         self.open()
 
+    # ------------------------
     # PATRIOT TV
+    # ------------------------
     def is_TV_active(self) -> bool:
         """
         Return True if the player is currently watching Patriot TV, else False.
