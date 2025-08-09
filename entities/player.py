@@ -22,6 +22,13 @@ class Player:
     """
 
     BASE_URL = "https://www.moswar.ru/player/"
+    LOCATORS = {
+        "currenthp": (By.XPATH, '//*[@id="personal"]//*[@id="currenthp"]'),
+        "maxhp": (By.XPATH, '//*[@id="personal"]//*[@id="maxhp"]'),
+        "currenttonus": (By.XPATH, '//*[@id="personal"]//*[@id="currenttonus"]'),
+        "maxenergy": (By.XPATH, '//*[@id="personal"]//*[@id="maxenergy"]'),
+        "stats": (By.CSS_SELECTOR, "li.stat"),
+    }
 
     def __init__(self, driver: WebDriver, update_info_on_init: bool = True):
         """
@@ -61,7 +68,7 @@ class Player:
         self.oil = 0
         self.honey = 0
 
-        # Player additional recourses (TBA primary_passes and dices update, also chips)
+        # Player additional recourses
         self.mobiles = 0
         self.stars = 0
         self.hunter_tokens = 0
@@ -70,9 +77,10 @@ class Player:
         self.powers = 0
         self.patriotisms = 0
         self.debts = 0
-        self.primary_passes = 0
-        self.dices = 0
-        self.chips = 0
+        self.travel_shuffles = 0
+        self.travel_passes = 0
+        self.moskowpoly_dices = 0
+        self.casino_chips = 0
 
         # Player acitve items
         self.pielmienies = 0
@@ -80,18 +88,14 @@ class Player:
         self.snickers = 0
 
         # Player statuses
+        self.is_major = False
         self.on_rest = False
         self.on_patrol = False
         self.on_work = False
         self.on_TV = False
         self.in_battle = False
         self.in_underground = False
-        self.is_major = False
-
-        # Player time left to do activities (TBA add refresh of those values)
-        self.patrol_time_left = 0
-        self.work_time_left = 0
-        self.TV_time_left = 0
+        self.current_blocking_activity = None  # TODO: add enum for this
 
         # Update player status
         self.open()
@@ -228,7 +232,7 @@ class Player:
                 recourse_value = int(recourse_attr.split(" ")[1])
                 setattr(self, recourse, recourse_value)
 
-    # TODO: add primary_passes, dices, chips
+    # TODO: add travel_passes, moskowpoly_dices, casino_chips
     def update_recourses_advanced(self) -> None:
         """
         Updates the information about player's advanced resources, including mobiles, stars, hunter tokens, and others.
@@ -442,9 +446,10 @@ class Player:
             print(f"Державы: {self.powers:,}")
             print(f"Патриотизм: {self.patriotisms:,}")
             print(f"Долги: {self.debts:,}")
-            print(f"Праймари пассы: {self.primary_passes:,}")
-            print(f"Кубики Москвополии: {self.dices:,}")
-            print(f"Фишки в казино: {self.chips:,}")
+            print(f"(Кругосветка) Смена босса: {self.travel_shuffles:,}")
+            print(f"(Кругосветка) Праймари пассы: {self.travel_passes:,}")
+            print(f"Кубики Москвополии: {self.moskowpoly_dices:,}")
+            print(f"Фишки в казино: {self.casino_chips:,}")
             print("\n")
             print("Текущие активные ресурсы игрока:")
             print(f"Пельмени: {self.pielmienies:,}")

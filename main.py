@@ -74,8 +74,6 @@ shaurburgers.get_work_time_left()
 shaurburgers.start_work_shift(2)
 
 
-selector = driver.find_element(By.NAME, "time")
-selector.text.split("\n")[-1].split(" ")[0]
 # Casino test
 casino = Casino(player, driver)
 casino.buy_chips(20)
