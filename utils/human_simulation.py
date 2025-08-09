@@ -16,4 +16,11 @@ def random_delay(min_time: float = 2, max_time: float = 3) -> None:
     Example:
         random_delay(1, 3)  # Pauses execution for a random duration between 1 and 3 seconds.
     """
+    if max_time < min_time:
+        raise ValueError("max_time must be greater than or equal to min_time")
+
+    if min_time < 0 or max_time < 0:
+        raise ValueError("min_time and max_time must be non-negative")
+
+    max_time = max(min_time, max_time)
     time.sleep(random.uniform(min_time, max_time))
