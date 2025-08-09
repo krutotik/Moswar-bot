@@ -42,29 +42,33 @@ password = os.getenv("PASSWORD", "default_password")
 credentials = {"login": login, "password": password}
 driver = log_in(driver, credentials)
 
-# Player (fix cookies expiration)
+# Player (TODO: fix cookies expiration)
 player = Player(driver, update_info_on_init=True)
 # player.use_item("Полезный пельмень", 140)
 player.show_info(show_all=True)
 
-# player.update_patrol_status()
 
 # Alley fighting
 alley = Alley(player, driver)
 
 alley.open()
-alley.if_rest_timer()
+
 alley.is_patrol_active()
-alley.is_TV_active()
 alley.get_patrol_time_left()
+alley.start_patrol(40)
+
+alley.is_TV_active()
 alley.get_TV_time_left()
-alley.start_patrol(20)
+alley.start_watching_TV(1)
+
+
+alley.is_rest_active()
 alley.reset_timer(ResetTimerType.ENERGY)
 alley.start_enemy_search(EnemySearchType.BY_LEVEL, enemy_level_min=16, enemy_level_max=16)
 
 
-for i in tqdm(range(2), desc="Fighting enemies"):
-    alley.fight_random_enemy_by_level(16, 16)
+timer = driver.find_element(By.XPATH, "//span[@class='timer' and contains(@trigger, 'end_alley_cooldown')]")
+
 
 # Casino test
 casino = Casino(player, driver)
@@ -98,30 +102,6 @@ trainer_vip.check_bojara_timer()
 alley = Alley(player, driver)
 shaurburgers = Shaurburgers(player, driver)
 # shaurburgers.start_work_shift(2)
-
-# patror status update is not working
-# work status update need to be fixed, do not 0 it if cannot update
-while True:
-    go_on_activities(player, alley, shaurburgers)
-
-    if all(
-        time_left == 0
-        for time_left in [
-            player.work_time_left,
-            player.patrol_time_left,
-            player.watch_patriot_TV_time_left,
-        ]
-    ):
-        print("Stopping routine.")
-        break
-
-    # Generate a random sleep duration in seconds
-    seconds_to_sleep = random.randint(41 * 60, 42 * 60)
-    print(f"Sleeping for {seconds_to_sleep // 60} minutes and {seconds_to_sleep % 60} seconds.")
-
-    # Use trange to show progress bar during sleep
-    for _ in trange(seconds_to_sleep, desc="Sleeping", unit="s", colour="cyan", leave=False):
-        time.sleep(1)
 
 
 # Metro
