@@ -29,12 +29,12 @@ class Alley:
 
     # TODO: optimize locators if possible
     BASE_URL = "https://www.moswar.ru/alley/"
-    LOCATORS = {
-        # Timers
+    LOCATORS: dict[str, tuple[str, str]] = {
+        # Rest timers
         "rest_timer": (By.XPATH, "//span[@class='timer' and contains(@trigger, 'end_alley_cooldown')]"),
         "rest_reset_enegry": (By.XPATH, "//div[@onclick=\"cooldownReset('tonus');\"]"),
         "rest_reset_snikers": (By.XPATH, "//div[@onclick=\"cooldownReset('snikers');\"]"),
-        # Enemy search
+        # Enemy search start
         "enemy_weak": (By.CSS_SELECTOR, ".button-big.btn.f1"),
         "enemy_equal": (By.CSS_SELECTOR, ".button-big.btn.f2"),
         "enemy_strong": (By.CSS_SELECTOR, ".button-big.btn.f3"),
@@ -46,11 +46,18 @@ class Alley:
         "enemy_level_min": (By.NAME, "minlevel"),
         "enemy_level_max": (By.NAME, "maxlevel"),
         "enemy_level_find": (By.XPATH, '//div[contains(text(), "Искать противника")]'),
-        "enemy_name_input": "TBA",
-        "enemy_name_find": "TBA",
+        # "enemy_name_input": "TBA",
+        # "enemy_name_find": "TBA",
+        # Enemy search end
+        "enemy_stats_table": (
+            By.XPATH,
+            '//td[@class="fighter2-cell"]//ul[@class="stats"]//span[@class="num"]',
+        ),
+        "enemy_find_another": (By.XPATH, '//a[contains(@href, "/alley/search/again/")]'),
+        "enemy_attack": (By.XPATH, "//div[@class='button button-fight']"),
         # Patrol
         "patrol_start_button": (By.XPATH, '//button[@id="alley-patrol-button" and @class="button"]'),
-        "patrol_leave_button": "TBA",
+        # "patrol_leave_button": "TBA",
         "patrol_select_minutes": (By.XPATH, '//*[@id="patrolForm"]/div[2]/select'),
         "patrol_active": (By.XPATH, "//td[@class='label' and text()='Патрулирование:']"),
         "patrol_time_left": (By.XPATH, '//form[@class="patrol" and @id="patrolForm"]//p[@class="timeleft"]'),
@@ -102,6 +109,7 @@ class Alley:
             self.player.on_rest = True
             return True
 
+    # TODO: add check for available energy
     def reset_rest_timer(self, reset_timer_type: ResetTimerType) -> None:
         """
         Resets the rest timer by using energy or snickers.
@@ -157,7 +165,6 @@ class Alley:
 
         # Set enemy min level
         enemy_level_min = enemy_level_min or self.player.level + 1
-        logger.info(f"Setting enemy minimum level to {enemy_level_min}.")
         enemy_level_min_str = str(enemy_level_min)
 
         set_enemy_level_min_el = self.driver.find_element(*self.LOCATORS["enemy_level_min"])
@@ -170,7 +177,6 @@ class Alley:
 
         # Set enemy max level
         enemy_level_max = enemy_level_max or self.player.level + 1
-        logger.info(f"Setting enemy maximum level to {enemy_level_max}.")
         enemy_level_max_str = str(enemy_level_max)
 
         set_enemy_level_max_el = self.driver.find_element(*self.LOCATORS["enemy_level_max"])
@@ -184,6 +190,7 @@ class Alley:
         self.driver.find_element(*self.LOCATORS["enemy_level_find"]).click()
         random_delay()
 
+    # TODO: add if finished on search page
     def start_enemy_search(
         self,
         enemy_search_type: EnemySearchType,
@@ -216,113 +223,47 @@ class Alley:
         if not self.driver.current_url.startswith(self.BASE_URL + "search/"):
             logger.error("Failed to start enemy search, driver is not on the search page.")
 
-    #     # Reset rest timer if needed
-    #     timer_el = self.driver.find_element(By.CLASS_NAME, "timer")
-    #     timer_value = timer_el.get_attribute("timer")
-    #     if timer_value and "-" not in timer_value:
-    #         logger.info("Player is on rest. Trying to eat sneakers to reset the timer.")
+    # TODO: add check if on search page
+    def finish_enemy_search(self) -> None:
+        """
+        TBA
+        """
+        player_stats_sum = (
+            self.player.health
+            + self.player.strength
+            + self.player.dexterity
+            + self.player.resistance
+            + self.player.intuition
+            + self.player.attention
+            + self.player.charism
+        )
 
-    #         try:
-    #             restore_snikers_el = self.driver.find_element(
-    #                 By.XPATH,
-    #                 "//div[@onclick=\"cooldownReset('snikers');\"]",
-    #             )
-    #             restore_snikers_el.click()
-    #             random_delay()
+        # Search
+        finished_enemy_search = False
+        while not finished_enemy_search:
+            enemy_stat_elements = self.driver.find_elements(*self.LOCATORS["enemy_stats_table"])
+            enemy_stats_sum = sum([int(element.text) for element in enemy_stat_elements])
 
-    #             self.player.snickers -= 1
-    #         except NoSuchElementException:
-    #             logger.error("Can't eat sneakers, player is still on rest.")
-    #             return None
+            if enemy_stats_sum > player_stats_sum:
+                logger.warning("Enemy stats are too high, trying to find another enemy.")
+                self.driver.find_element(*self.LOCATORS["enemy_find_another"]).click()
+                random_delay()
+            else:
+                logger.info("Enemy found, attacking.")
+                finished_enemy_search = True
 
-    #     # Show search bar if not displayed
-    #     is_displ = self.driver.find_element(By.ID, "search-enemy-bar").get_attribute("style")
-    #     if is_displ == "display: none;":
-    #         logger.info("Search enemy bar is hidden. Clicking to display it.")
-    #         display_all_el = self.driver.find_element(
-    #             By.XPATH,
-    #             "//span[@class='dashedlink' and @onclick='toggleSearchEnemyBar();']",
-    #         )
-    #         display_all_el.click()
-    #         random_delay()
+        # Attack
+        attack_enemy_el = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located(self.LOCATORS["enemy_attack"])
+        )
+        attack_enemy_el.click()
+        self.player.on_rest = True
+        random_delay()
 
-    #     # Set enemy min level
-    #     if enemy_level_min is None:
-    #         logger.info("Enemy minimum level is not specified. Setting it to player level + 1.")
-    #         enemy_level_min = self.player.level + 1
-    #     enemy_level_min_str = str(enemy_level_min)
-
-    #     set_enemy_level_min_el = self.driver.find_element(By.NAME, "minlevel")
-    #     curr_value_min = set_enemy_level_min_el.get_attribute("value")
-    #     if curr_value_min != enemy_level_min_str:
-    #         logger.info(f"Enemy minimum level is not {enemy_level_min_str}. Updating it.")
-    #         set_enemy_level_min_el.clear()
-    #         set_enemy_level_min_el.send_keys(enemy_level_min_str)
-    #         random_delay()
-
-    #     # Set enemy max level
-    #     if enemy_level_max is None:
-    #         logger.info("Enemy maximum level is not specified. Setting it to player level + 1.")
-    #         enemy_level_max = self.player.level + 1
-    #     enemy_level_max_str = str(enemy_level_max)
-
-    #     set_enemy_level_max_el = self.driver.find_element(By.NAME, "maxlevel")
-    #     value_max = set_enemy_level_max_el.get_attribute("value")
-    #     if value_max != enemy_level_max_str:
-    #         logger.info(f"Enemy maximum level is not {enemy_level_max_str}. Updating it.")
-    #         set_enemy_level_max_el.clear()
-    #         set_enemy_level_max_el.send_keys(enemy_level_max_str)
-    #         random_delay()
-
-    #     # Find enemy to attack
-    #     logger.info("Finding an enemy to attack.")
-    #     find_enemy_major_el = self.driver.find_element(
-    #         By.XPATH, '//div[contains(text(), "Искать противника")]'
-    #     )
-    #     find_enemy_major_el.click()
-    #     random_delay()
-
-    #     finished_enemy_search = False
-    #     while not finished_enemy_search:
-    #         player_stats_sum = (
-    #             self.player.health
-    #             + self.player.strength
-    #             + self.player.dexterity
-    #             + self.player.resistance
-    #             + self.player.intuition
-    #             + self.player.attention
-    #             + self.player.charism
-    #         )
-
-    #         enemy_stat_elements = self.driver.find_elements(
-    #             By.XPATH,
-    #             '//td[@class="fighter2-cell"]//ul[@class="stats"]//span[@class="num"]',
-    #         )
-    #         enemy_stat_values = [int(element.text) for element in enemy_stat_elements]
-    #         enemy_stats_sum = sum(enemy_stat_values)
-
-    #         if enemy_stats_sum > player_stats_sum:
-    #             logger.warning("Enemy stats are too high, trying to find another enemy.")
-    #             find_another_el = self.driver.find_element(
-    #                 By.XPATH, '//a[contains(@href, "/alley/search/again/")]'
-    #             )
-    #             find_another_el.click()
-    #             random_delay()
-    #         else:
-    #             logger.info("Enemy found, attacking.")
-    #             finished_enemy_search = True
-
-    #     # Attack enemy
-    #     attack_enemy_el = WebDriverWait(self.driver, 10).until(
-    #         EC.presence_of_element_located((By.XPATH, "//div[@class='button button-fight']"))
-    #     )
-    #     attack_enemy_el.click()
-    #     random_delay()
-
-    #     # Return to the alley
-    #     self.driver.get(self.BASE_URL)
-    #     random_delay()
-    #     logger.info("Finished fight with random enemy.")
+        # Return to the alley
+        self.open()
+        random_delay()
+        logger.info("Finished fight with random enemy.")
 
     # PATROL
     def is_patrol_active(self) -> bool:
