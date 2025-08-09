@@ -1,9 +1,6 @@
-import re
-
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
 from tqdm import tqdm
 
 from utils.custom_logging import logger
@@ -23,10 +20,11 @@ class Player:
 
     BASE_URL = "https://www.moswar.ru/player/"
     LOCATORS = {
-        "currenthp": (By.XPATH, '//*[@id="personal"]//*[@id="currenthp"]'),
-        "maxhp": (By.XPATH, '//*[@id="personal"]//*[@id="maxhp"]'),
-        "currenttonus": (By.XPATH, '//*[@id="personal"]//*[@id="currenttonus"]'),
-        "maxenergy": (By.XPATH, '//*[@id="personal"]//*[@id="maxenergy"]'),
+        # Health and Energy
+        "hp_current": (By.XPATH, '//*[@id="personal"]//*[@id="hp_current"]'),
+        "hp_max": (By.XPATH, '//*[@id="personal"]//*[@id="maxhp"]'),
+        "mp_current": (By.XPATH, '//*[@id="personal"]//*[@id="currenttonus"]'),
+        "mp_max": (By.XPATH, '//*[@id="personal"]//*[@id="maxenergy"]'),
         "stats": (By.CSS_SELECTOR, "li.stat"),
     }
 
@@ -46,12 +44,12 @@ class Player:
         self.experience_needed_to_level = 0
 
         # Player health and energy
-        self.currenthp = 0.0
-        self.currenthp_max = 0.0
-        self.currenthp_prc = 0.0
-        self.currentmp = 0.0
-        self.currentmp_max = 0.0
-        self.currentmp_prc = 0.0
+        self.hp_max = 0.0
+        self.hp_current = 0.0
+        self.hp_current_prc = 0.0
+        self.mp_max = 0.0
+        self.mp_current = 0.0
+        self.mp_current_prc = 0.0
 
         # Player stats
         self.health = 0
@@ -97,16 +95,25 @@ class Player:
         self.in_underground = False
         self.current_blocking_activity = None  # TODO: add enum for this
 
+        # Player time left to do activities (TODO: add refresh of those values)
+        self.patrol_time_left = 0
+        self.work_time_left = 0
+        self.TV_time_left = 0
+
         # Update player status
         self.open()
         self.is_in_battle(is_refresh=False)
-        self.is_in_underground(is_refresh=False, verbose=False)
+        self.is_in_underground(is_refresh=False)
 
         if not update_info_on_init:
             logger.warning("Player successfully initialized, however player info was not updated.")
-        elif self.in_battle or self.in_underground:
+        elif self.in_battle:
             logger.warning(
-                "Player successfully initialized, however information about player status was not updated. Player is in battle or underground."
+                "Player successfully initialized, however information about player status was not updated. Player is in battle."
+            )
+        elif self.in_underground:
+            logger.warning(
+                "Player successfully initialized, however information about player status was not updated. Player is in underground."
             )
         else:
             self.update_health_and_energy()
@@ -132,33 +139,27 @@ class Player:
             random_delay()
 
     # create dict and use setattr
-    def update_health_and_energy(self, is_refresh: bool = True, verbose: bool = True) -> None:
+    def update_health_and_energy(self, is_refresh: bool = True) -> None:
         """
         Updates the information about player's current health and energy levels.
-
-        Parameters:
-            is_refresh (bool): Whether to refresh the page before fetching the data. Defaults to True.
-            verbose (bool): Whether to log the update process. Defaults to True.
         """
-        if verbose:
-            logger.info("Updating player health and energy info.")
         if is_refresh:
             self.driver.refresh()
             random_delay()
 
         # Health
-        currenthp_el = self.driver.find_element(By.XPATH, '//*[@id="personal"]//*[@id="currenthp"]')
-        self.currenthp = float(currenthp_el.get_attribute("title") or 0)
-        currenthp_max_el = self.driver.find_element(By.XPATH, '//*[@id="personal"]//*[@id="maxhp"]')
-        self.currenthp_max = float(currenthp_max_el.get_attribute("title") or 0)
-        self.currenthp_prc = self.currenthp / self.currenthp_max
+        hp_max_el = self.driver.find_element(*self.LOCATORS["hp_max"])
+        hp_current_el = self.driver.find_element(*self.LOCATORS["hp_current"])
+        self.hp_max = float(hp_max_el.get_attribute("title") or 0)
+        self.hp_current = float(hp_current_el.get_attribute("title") or 0)
+        self.hp_current_prc = self.hp_current / self.hp_max
 
         # Energy
-        currentmp_el = self.driver.find_element(By.XPATH, '//*[@id="personal"]//*[@id="currenttonus"]')
-        self.currentmp = float(currentmp_el.text)
-        currentmp_max_el = self.driver.find_element(By.XPATH, '//*[@id="personal"]//*[@id="maxenergy"]')
-        self.currentmp_max = float(currentmp_max_el.text)
-        self.currentmp_prc = self.currentmp / self.currentmp_max
+        mp_max_el = self.driver.find_element(*self.LOCATORS["mp_max"])
+        mp_current_el = self.driver.find_element(*self.LOCATORS["mp_current"])
+        self.mp_max = float(mp_max_el.text)
+        self.mp_current = float(mp_current_el.text)
+        self.mp_current_prc = self.mp_current / self.mp_max
 
     def update_stats(self) -> None:
         """
@@ -343,7 +344,7 @@ class Player:
         else:
             # self.update_patrol_status()
             # self.update_watch_patriot_TV_status()
-            self.update_work_status()
+            # self.update_work_status()
 
     # TODO: add info when was the last time this info was updated?
     def show_info(self, show_all: bool = False) -> None:
@@ -355,12 +356,12 @@ class Player:
             show_all (bool): If True, displays additional player details. Default is False.
         """
         print("Текущие состояния игрока:")
-        print(f"Текущее здоровье: {self.currenthp:,}")
-        print(f"Максимальное здоровье: {self.currenthp_max:,}")
-        print(f"Процент здоровья: {self.currenthp_prc * 100:.2f}%")
-        print(f"Текущая энергия: {self.currentmp:,}")
-        print(f"Максимальная энергия: {self.currentmp_max:,}")
-        print(f"Процент энергии: {self.currentmp_prc * 100:.2f}%")
+        print(f"Текущее здоровье: {self.hp_current:,}")
+        print(f"Максимальное здоровье: {self.hp_max:,}")
+        print(f"Процент здоровья: {self.hp_current_prc * 100:.2f}%")
+        print(f"Текущая энергия: {self.mp_current:,}")
+        print(f"Максимальная энергия: {self.mp_max:,}")
+        print(f"Процент энергии: {self.mp_current_prc * 100:.2f}%")
         print("\n")
         print("Текущие базовые ресурсы игрока:")
         print(f"Тугрики: {self.money:,}")
@@ -425,8 +426,8 @@ class Player:
         logger.info("Restoring player health.")
 
         # Check current hp status
-        self.update_health_and_energy(verbose=False)
-        if self.currenthp_prc == 1.0:
+        self.update_health_and_energy()
+        if self.hp_current_prc == 1.0:
             logger.error("Player health is full, there is no need to restore health.")
             return None
 
@@ -450,8 +451,8 @@ class Player:
             return None
 
         # Check if player health is restored
-        self.update_health_and_energy(is_refresh=False, verbose=False)
-        if self.currenthp_prc != 1.0:
+        self.update_health_and_energy(is_refresh=False)
+        if self.hp_current_prc != 1.0:
             logger.error("Something went wrong, player health was not restored.")
 
     def restore_energy(self) -> None:
@@ -464,8 +465,8 @@ class Player:
         logger.info("Restoring player energy.")
 
         # Check current energy status
-        self.update_health_and_energy(verbose=False)
-        if self.currentmp_prc == 1.0:
+        self.update_health_and_energy()
+        if self.mp_current_prc == 1.0:
             logger.error("Player energy is full, there is no need to restore energy.")
             return None
 
@@ -540,7 +541,7 @@ class Player:
 
         # Use items
         used_times = 0
-        for i in tqdm(range(times), desc=f"Using '{item}'"):
+        for _ in tqdm(range(times), desc=f"Using '{item}'"):
             try:
                 item_el.click()
                 used_times += 1
