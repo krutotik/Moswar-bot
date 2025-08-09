@@ -3,10 +3,10 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from tqdm import tqdm
 
+from schemas.player import RestoreEnergyType
 from utils.custom_logging import logger
 from utils.human_simulation import random_delay
 
-# TODO: add find elements to make the code shorter like when I try to find sum of stats of the enemy
 # TODO: add status of the player, searching< fighting, etc.
 
 
@@ -53,6 +53,19 @@ class Player:
         ),
         "tonuses": (By.XPATH, '//*[@id="inventory-restoretonus-btn"]/parent::div//div[@class="count"]'),
         "snickers": (By.XPATH, '//*[@id="inventory-snikers-btn"]/parent::div//div[@class="count"]'),
+        # Health restoration
+        "restore_health_button": (
+            By.XPATH,
+            '//i[contains(@onclick, "showHPAlert();") and not(contains(@style, "display:none;"))]',
+        ),
+        "restore_health_confirm": (By.XPATH, '//div[@class="c" and contains(text(), "Вылечиться - ")]'),
+        # Energy restoration
+        "restore_energy_button": (
+            By.XPATH,
+            '//i[contains(@onclick, "jobShowTonusAlert();") and not(contains(@style, "display:none;"))]',
+        ),
+        "restore_energy_tonus": (By.XPATH, '//div[@class="c" and contains(., " — «Тонус+»")]'),
+        "restore_energy_ore": (By.XPATH, '//div[@class="c" and .//span[@class="ruda" and text()="10"]]'),
     }
 
     def __init__(self, driver: WebDriver, update_info_on_init: bool = True):
@@ -120,7 +133,7 @@ class Player:
         self.on_TV = False
         self.in_battle = False
         self.in_underground = False
-        self.current_blocking_activity = None  # TODO: add enum for this
+        self.current_blocking_activity = None  # TODO: add enum for this?
 
         # Player time left to do activities (TODO: add refresh of those values)
         self.patrol_time_left = 0
@@ -129,8 +142,7 @@ class Player:
 
         # Update player status
         self.open()
-        self.is_in_battle(is_refresh=False)
-        self.is_in_underground(is_refresh=False)
+        self.update_blocking_actvities_status(is_refresh=False)
 
         if not update_info_on_init:
             logger.warning("Player successfully initialized, however player info was not updated.")
@@ -149,7 +161,7 @@ class Player:
             self.update_recourses_inventory()
             self.update_recourses_advanced()
             self.update_major_status()
-            self.update_all_actvities_status()
+
             logger.info("Player successfully initialized.")
 
     def __setattr__(self, name: str, value: float):
@@ -366,31 +378,37 @@ class Player:
         # if not self.in_underground and self.current_blocking_activity == "underground":
         #     self.current_blocking_activity = None
 
-    # TODO: fix this, it is not working
-    def update_all_actvities_status(self) -> None:
+    def update_blocking_actvities_status(self, is_refresh: bool = True) -> None:
         """
-        Updates all player activity statuses, both restrictive and non-restrictive.
-
-        First updates restrictive statuses (in-battle and underground). If the player is in
-        a restrictive status, logs an error and stops further updates. Otherwise, updates
-        non-restrictive statuses including patrol, work, and watching Patriot TV.
-
-        Logs the progress and results of the updates.
+        Updates player blocking activities statuses.
         """
-        logger.info("Updating all player activities status.")
-
-        # Restrictive statuses
-        self.is_in_battle(is_refresh=True)
+        logger.info("Updating player blocking activities statuses.")
+        self.is_in_battle(is_refresh)
         self.is_in_underground(is_refresh=False)
 
-        # Non-restrictive statuses if possible
-        if self.in_battle or self.in_underground:
-            logger.error("Cannot update other status while in battle or underground.")
-        else:
-            pass
-            # self.update_patrol_status()
-            # self.update_watch_patriot_TV_status()
-            # self.update_work_status()
+        # TODO: finish
+        # def update_activity_statuses(self) -> None:
+        # """
+        # Updates player activity statuses using location classes.
+        # """
+        # from locations.alley import Alley
+        # from locations.locations_secondary import Shaurburgers
+
+        # if self.in_battle or self.in_underground:
+        #     logger.error("Cannot update other status while in battle or underground.")
+        #     return
+
+        # alley = Alley(self, self.driver)
+        # alley.open()
+        # self.on_patrol = alley.is_patrol_active()
+        # self.patrol_time_left = alley.get_patrol_time_left()
+        # self.on_TV = alley.is_TV_active()
+        # self.TV_time_left = alley.get_TV_time_left()
+
+        # work = Shaurburgers(self, self.driver)
+        # work.open()
+        # self.on_work = work.is_work_active()
+        # self.work_time_left = work.get_work_time_left()
 
     def show_info(self, show_all: bool = False) -> None:
         """
@@ -468,90 +486,62 @@ class Player:
     def restore_health(self) -> None:
         """
         Restores the player's health if it's not already at full.
-
-        Checks the current health status, and if not full, tries to find and click
-        the appropriate healing buttons to restore health.
         """
         logger.info("Restoring player health.")
 
-        # Check current hp status
         self.update_health_and_energy()
         if self.hp_current_prc == 1.0:
             logger.error("Player health is full, there is no need to restore health.")
             return None
 
-        # Try to find healing button and heal
-        try:
-            healing_el_1 = self.driver.find_element(
-                By.XPATH,
-                '//i[contains(@onclick, "showHPAlert();") and not(contains(@style, "display:none;"))]',
-            )
-            healing_el_1.click()
-            random_delay()
+        self.driver.find_element(*self.LOCATORS["restore_health_button"]).click()
+        random_delay()
 
-            healing_el_2 = self.driver.find_element(
-                By.XPATH, '//div[@class="c" and contains(text(), "Вылечиться - ")]'
-            )
-            healing_el_2.click()
-            random_delay()
-            logger.info("Player health restored.")
-        except NoSuchElementException:
-            logger.error("Can't restore player health, restoring button not found.")
-            return None
+        self.driver.find_element(*self.LOCATORS["restore_health_confirm"]).click()
+        random_delay()
 
-        # Check if player health is restored
         self.update_health_and_energy(is_refresh=False)
         if self.hp_current_prc != 1.0:
             logger.error("Something went wrong, player health was not restored.")
+        else:
+            self.money -= 100
 
-    def restore_energy(self) -> None:
+    # TODO: fix ore, now it works even for honey
+    def restore_energy(self, restore_by: RestoreEnergyType) -> None:
         """
         Restores the player's energy if it's not already full.
 
-        Checks the current energy status and attempts to restore energy using
-        different methods (tonus bottle, ore).
+        Parameters:
+            restore_by (RestoreEnergyType): The type of energy restoration to use (TONUS or ORE).
         """
         logger.info("Restoring player energy.")
 
-        # Check current energy status
         self.update_health_and_energy()
         if self.mp_current_prc == 1.0:
             logger.error("Player energy is full, there is no need to restore energy.")
             return None
 
-        # Try to find energy button 1
+        self.driver.find_element(*self.LOCATORS["restore_energy_button"]).click()
+        random_delay()
+
         try:
-            energy_el_1 = self.driver.find_element(
-                By.XPATH,
-                '//i[contains(@onclick, "jobShowTonusAlert();") and not(contains(@style, "display:none;"))]',
-            )
-            energy_el_1.click()
+            self.driver.find_element(
+                *self.LOCATORS[f"restore_energy_{RestoreEnergyType.TONUS.value}"]
+            ).click()
             random_delay()
         except NoSuchElementException:
-            logger.error("Can't restore player energy, restoring button not found.")
+            logger.error(f"Energy restore type '{restore_by}' is not available.")
             return None
 
-        # Try to use tonus bottle from inventory
-        try:
-            use_tonus_bottle_el = self.driver.find_element(
-                By.XPATH, '//div[@class="c" and contains(., " — «Тонус+»")]'
-            )
-            use_tonus_bottle_el.click()
-            logger.info("Player energy restored using tonus bottle.")
-            random_delay()
-            return None
-        except NoSuchElementException:
-            logger.warning("Tried to use tonus bottle from inventory, but it's not available.")
-
-        # Try to find restore energy using ore
-        try:
-            restore_energy_el = self.driver.find_element(By.XPATH, '//span[@class="ruda"]')
-            restore_energy_el.click()
-            logger.info("Player energy restored using ore.")
-            random_delay()
-            return None
-        except NoSuchElementException:
-            logger.error("Tried to restore energy using ore, button was not found.")
+        self.update_health_and_energy(is_refresh=False)
+        if self.mp_current_prc != 1.0:
+            logger.error(f"Something went wrong, player energy could not be restored using {restore_by}.")
+        else:
+            logger.info(f"Player energy successfully restored using {restore_by}.")
+            if restore_by == RestoreEnergyType.TONUS:
+                self.tonuses -= 1
+            elif restore_by == RestoreEnergyType.ORE:
+                self.ore -= 1
 
     # TODO: add minus in recources when using this
     def use_item(self, item: str, times: int) -> None:

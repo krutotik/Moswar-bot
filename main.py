@@ -21,6 +21,7 @@ from locations.home import Home
 from locations.locations_secondary import Shaurburgers
 from locations.metro import Metro
 from schemas.alley import EnemySearchType, ResetTimerType
+from schemas.player import RestoreEnergyType
 
 load_dotenv()
 
@@ -43,9 +44,14 @@ player.update_recourses_basic()
 player.update_recourses_advanced()
 player.update_recourses_inventory()
 player.show_info(show_all=True)
+player.restore_health()
+player.restore_energy(restore_by=RestoreEnergyType.TONUS)
+player.restore_energy(restore_by=RestoreEnergyType.ORE)
 
 # player.use_item("Полезный пельмень", 140)
-
+driver.find_element(
+    By.XPATH, '//div[@class="c" and .//span[@class="ruda" and normalize-space(text())="10"]]'
+).click()
 
 # Alley test
 alley = Alley(player, driver)
