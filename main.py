@@ -1,33 +1,24 @@
 import os
 import random
-import re
 import time
 
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
-from tqdm import tqdm, trange
 
 from authorization import log_in
 from configuration.configuration import set_options
 from entities.pets import PetForFightMain
 from entities.player import Player
-from general_functions import go_on_activities
+
+# from general_functions import go_on_activities
 from locations.alley import Alley
 from locations.home import Home
-from locations.locations_secondary import (
-    Casino,
-    Factory,
-    NightClub,
-    Police,
-    Shaurburgers,
-    TrainerVip,
-)
+from locations.locations_secondary import Shaurburgers
 from locations.metro import Metro
 from schemas.alley import EnemySearchType, ResetTimerType
 
@@ -48,7 +39,7 @@ player = Player(driver, update_info_on_init=True)
 player.show_info(show_all=True)
 
 
-# Alley fighting
+# Alley test
 alley = Alley(player, driver)
 alley.open()
 
@@ -63,7 +54,6 @@ alley.is_TV_active()
 alley.get_TV_time_left()
 alley.start_watching_TV(1)
 
-
 alley.is_rest_active()
 alley.reset_rest_timer(ResetTimerType.ENERGY)
 alley.start_enemy_search(EnemySearchType.BY_LEVEL, enemy_level_min=16, enemy_level_max=16)
@@ -75,7 +65,17 @@ for i in range(10):
     alley.start_enemy_search(EnemySearchType.BY_LEVEL, enemy_level_min=16, enemy_level_max=16)
     alley.finish_enemy_search()
 
+# Shaurburgers test
+shaurburgers = Shaurburgers(player, driver)
+shaurburgers.open()
 
+shaurburgers.is_work_active()
+shaurburgers.get_work_time_left()
+shaurburgers.start_work_shift(2)
+
+
+selector = driver.find_element(By.NAME, "time")
+selector.text.split("\n")[-1].split(" ")[0]
 # Casino test
 casino = Casino(player, driver)
 casino.buy_chips(20)

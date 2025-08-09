@@ -23,6 +23,11 @@ class Shaurburgers:
     """
 
     BASE_URL = "https://www.moswar.ru/shaurburgers/"
+    LOCATORS: dict[str, tuple[str, str]] = {
+        "work_start_button": (By.XPATH, '//span[@class="f"]'),
+        "work_select_hours": (By.NAME, "time"),
+        "work_leave_button": (By.XPATH, '//span[@class="button" and @onclick="macdonaldsLeave();"]'),
+    }
 
     def __init__(self, player: Player, driver: WebDriver):
         """
@@ -37,12 +42,10 @@ class Shaurburgers:
 
     def open(self) -> None:
         """
-        This method ensures the driver is on the shaurburgers page by navigating to its URL.
+        Ensure the driver is on the Shaurburgers page, navigating or refreshing as needed
         """
         if self.driver.current_url != self.BASE_URL:
-            logger.info(
-                "Driver is not on the shaurburgers page. Going to the shaurburgers."
-            )
+            logger.info("Driver is not on the shaurburgers page. Going to the shaurburgers.")
             self.driver.get(self.BASE_URL)
             random_delay()
         else:
@@ -50,56 +53,86 @@ class Shaurburgers:
             self.driver.refresh()
             random_delay()
 
+    def is_work_active(self) -> bool:
+        """
+        Return True if the player is currently working, else False.
+        """
+        try:
+            self.driver.find_element(*self.LOCATORS["work_leave_button"])
+            self.player.on_work = True
+            return True
+        except NoSuchElementException:
+            self.player.on_work = False
+            return False
+
+    def get_work_time_left(self) -> int:
+        """
+        Get the remaining work time in hours.
+        """
+        try:
+            select_work_hours_el_el = self.driver.find_element(*self.LOCATORS["work_select_hours"])
+            time_left = int(select_work_hours_el_el.text.split("\n")[-1].split(" ")[0])
+        except Exception:
+            time_left = 0
+
+        self.player.work_time_left = time_left
+        return time_left
+
     def start_work_shift(self, work_hours: int) -> None:
         """
-        Starts a work shift for a specified number of hours if no work is currently active. Updates the player's
-        work status.
+        Start a work shift for the specified duration.
 
         Parameters:
-            work_hours (int): The duration of the work shift in hours. Valid values are between 1 and 8.
+            work_hours (int): Duration of work shift in hours. Must be between 1 and 8.
 
-        Raises:
-            ValueError: If the work hours are not between 1 and 8.
+        Behavior:
+            - Checks for valid work shift duration and player status.
+            - Ensures enough work time is left.
+            - Selects work shift duration and starts work.
+            - Updates player status and logs the result.
         """
-        if not (1 <= work_hours <= 8):
-            raise ValueError("Work hours must be between 1 and 8.")
-
         logger.info(f"Starting work shift for {work_hours} hours.")
-        self.open()
 
-        # Transform hours to string
+        # Error checks
+        if not (1 <= work_hours <= 8):
+            logger.error("Work hours must be between 1 and 8.")
+            return None
+
+        if self.is_work_active():
+            logger.error("Can't start the work shift, player is already working.")
+            return None
+
+        work_time_left = self.get_work_time_left()
+        if work_time_left < work_hours:
+            logger.error(
+                f"Can't start the work shift for {work_hours} hours, player has only {work_time_left} hours left."
+            )
+            return None
+
+        # Start work
         if work_hours == 1:
             work_hours_str = "1 час"
         elif work_hours in [2, 3, 4]:
             work_hours_str = f"{work_hours} часа"
         else:
             work_hours_str = f"{work_hours} часов"
-        logger.info(f"Transforming minutes to string: {work_hours_str}")
 
-        try:
-            leave_work_button = self.driver.find_element(
-                By.XPATH, '//span[@class="button" and @onclick="macdonaldsLeave();"]'
-            )
-            self.player.on_work = True
-            logger.error("Can't start the work shift, player is already working.")
-            return None
-        except NoSuchElementException:
-            pass
-
-        # Start work if not already started
-        select_work_minutes_el = Select(self.driver.find_element(By.NAME, "time"))
-        select_work_minutes_el.select_by_visible_text(work_hours_str)
+        select_work_hours_el = Select(self.driver.find_element(*self.LOCATORS["work_select_hours"]))
+        select_work_hours_el.select_by_visible_text(work_hours_str)
         random_delay()
 
-        start_work_el = self.driver.find_element(By.XPATH, '//span[@class="f"]')
+        start_work_el = self.driver.find_element(*self.LOCATORS["work_start_button"])
         start_work_el.click()
-        random_delay()
 
-        # Update player status
-        self.player.on_work = True
-        self.player.work_time_left -= work_hours
-        logger.info("Work shift successfully started.")
-        return None
+        # Check
+        random_delay(min_time=5, max_time=6)
+        if self.is_work_active():
+            self.player.work_time_left -= work_hours
+            logger.info(
+                f"Work shift started for {work_hours} hours. Remaining work time: {self.player.work_time_left} hours."
+            )
+        else:
+            logger.error("Failed to start work shift")
 
 
 # TODO: add as player attribute the number of chips the user has
@@ -151,9 +184,7 @@ class Casino:
             raise ValueError("Chips must be between 1 and 20.")
 
         # Buy chips
-        buy_amt_el = self.driver.find_element(
-            By.XPATH, '//input[@id="stash-change-ore"]'
-        )
+        buy_amt_el = self.driver.find_element(By.XPATH, '//input[@id="stash-change-ore"]')
         buy_amt_el.click()
         random_delay()
         buy_amt_el.send_keys(Keys.BACKSPACE)
@@ -161,17 +192,13 @@ class Casino:
         buy_amt_el.send_keys(str(amount))
         random_delay()
 
-        buy_confirm_el = self.driver.find_element(
-            By.XPATH, '//button[@id="button-change-ore"]'
-        )
+        buy_confirm_el = self.driver.find_element(By.XPATH, '//button[@id="button-change-ore"]')
         buy_confirm_el.click()
         random_delay()
 
         # Confirm bought chips
         try:
-            self.driver.find_element(
-                By.XPATH, "//*[contains(text(), 'Антиазартный комитет запрещает')]"
-            )
+            self.driver.find_element(By.XPATH, "//*[contains(text(), 'Антиазартный комитет запрещает')]")
             logger.error(f"Can't buy {amount} chips, player is not allowed to buy.")
         except NoSuchElementException:
             logger.info(f"Successfully bought {amount} chips.")
@@ -276,9 +303,7 @@ class NightClub:
             time_text = time_element.text
             time_hours = int(time_text.split(":")[0])
             time_minutes = int(time_text.split(":")[1])
-            logger.info(
-                f"Player can take new tattoos in {time_hours} hours and {time_minutes} minutes."
-            )
+            logger.info(f"Player can take new tattoos in {time_hours} hours and {time_minutes} minutes.")
         except NoSuchElementException:
             time_hours = 0
             time_minutes = 0
@@ -345,9 +370,7 @@ class Factory:
 
         # Check if page is supported
         if page != "main" and page not in self.SUBPAGES:
-            raise ValueError(
-                f"Page '{page}' is not supported. Allowed: {', '.join(self.SUBPAGES)}."
-            )
+            raise ValueError(f"Page '{page}' is not supported. Allowed: {', '.join(self.SUBPAGES)}.")
 
         # Check if page is already open
         if self.on_page == page:
@@ -387,9 +410,7 @@ class Factory:
             return None
 
         # Get details name
-        img_el = self.driver.find_element(
-            By.XPATH, "//div[@class='exchange']//div[@class='get']//img"
-        )
+        img_el = self.driver.find_element(By.XPATH, "//div[@class='exchange']//div[@class='get']//img")
         details_name = img_el.get_attribute("alt")
         logger.info(f"Details name: '{details_name}'")
         return details_name
@@ -406,9 +427,7 @@ class Factory:
             return None
 
         # Buy details
-        buy_details_el = self.driver.find_element(
-            By.XPATH, '//button[@id="factory-build-exchange"]'
-        )
+        buy_details_el = self.driver.find_element(By.XPATH, '//button[@id="factory-build-exchange"]')
         buy_details_el.click()
         random_delay()
 
@@ -442,9 +461,7 @@ class TrainerVip:
         This method ensures the driver is on the vip trainer page by navigating to its URL.
         """
         if self.driver.current_url != self.BASE_URL:
-            logger.info(
-                "Driver is not on the vip trainer page. Going to the vip trainer."
-            )
+            logger.info("Driver is not on the vip trainer page. Going to the vip trainer.")
             self.driver.get(self.BASE_URL)
             random_delay()
         else:
@@ -472,9 +489,7 @@ class TrainerVip:
             time_text = time_element.text
             time_hours = int(time_text.split(":")[0])
             time_minutes = int(time_text.split(":")[1])
-            logger.info(
-                f"Player can drink Bojara in {time_hours} hours and {time_minutes} minutes."
-            )
+            logger.info(f"Player can drink Bojara in {time_hours} hours and {time_minutes} minutes.")
         except NoSuchElementException:
             time_hours = 0
             time_minutes = 0
