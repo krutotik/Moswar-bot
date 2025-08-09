@@ -12,7 +12,6 @@ from utils.custom_logging import logger
 from utils.human_simulation import random_delay
 
 # TODO:
-# update description and docstrings
 # address TODOs in the code
 # add противостояние
 
@@ -58,7 +57,6 @@ class Alley:
         "enemy_attack": (By.XPATH, "//div[@class='button button-fight']"),
         # Patrol
         "patrol_start_button": (By.XPATH, '//button[@id="alley-patrol-button" and @class="button"]'),
-        # "patrol_leave_button": "TBA",
         "patrol_select_minutes": (By.XPATH, '//*[@id="patrolForm"]/div[2]/select'),
         "patrol_active": (By.XPATH, "//td[@class='label' and text()='Патрулирование:']"),
         "patrol_time_left": (By.XPATH, '//form[@class="patrol" and @id="patrolForm"]//p[@class="timeleft"]'),
@@ -248,17 +246,18 @@ class Alley:
         elif enemy_search_type == enemy_search_type.BY_LEVEL:
             self._search_enemy_by_level(enemy_level_min, enemy_level_max)
 
+        # Check
         if not self.driver.current_url.startswith(self.BASE_URL + "search/"):
             logger.error("Failed to start enemy search, driver is not on the search page.")
 
-        # Check
-        # TODO: check if on search page
-
-    # TODO: add check if on search page
     def finish_enemy_search(self) -> None:
         """
         Complete the enemy search and attack a suitable enemy.
         """
+        if not self.driver.current_url.startswith(self.BASE_URL + "search/"):
+            logger.error("Failed to finish enemy search, driver is not on the search page.")
+            return None
+
         player_stats_sum = (
             self.player.health
             + self.player.strength
@@ -284,17 +283,21 @@ class Alley:
                 finished_enemy_search = True
 
         # Attack
+        self.player.update_recourses_basic()
+        money_before = self.player.money
+
         attack_enemy_el = WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located(self.LOCATORS["enemy_attack"])
         )
         attack_enemy_el.click()
         self.player.on_rest = True
         random_delay()
-
-        # Return to the alley
         self.open()
         random_delay()
-        logger.info("Finished fight with random enemy.")
+
+        self.player.update_recourses_basic()
+        money_after = self.player.money
+        logger.info(f"Finished fight with random enemy. Earned money: {(money_after - money_before):,}")
 
     # PATROL
     def is_patrol_active(self) -> bool:
@@ -400,6 +403,9 @@ class Alley:
             return None
 
         try:
+            self.player.update_recourses_basic()
+            money_before = self.player.money
+
             caravan_el_1 = self.driver.find_element(*self.LOCATORS["caravan_available"])
             caravan_el_1.click()
             random_delay()
@@ -412,8 +418,11 @@ class Alley:
             if result_text.startswith("К сожалению"):
                 logger.info("Caravan farm failed :(")
             else:
-                logger.info(f"Caravan farm successfully completed. Result: {result_text}")
-                self.player.money += 0  # TODO: Update with actual money farmed
+                logger.info("Caravan farm successfully completed")
+
+            self.player.update_recourses_basic()
+            money_after = self.player.money
+            logger.info(f"Earned money from caravan: {(money_after - money_before):,}")
         except NoSuchElementException:
             logger.error("Error while trying to rob the caravan")
 
