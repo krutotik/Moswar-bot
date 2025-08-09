@@ -1,6 +1,4 @@
-import re
-from math import e
-from typing import Optional
+from typing import Literal, Optional
 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -28,6 +26,7 @@ class Alley:
         BASE_URL: The base URL for the Alley page.
     """
 
+    # TODO: optimize locators if possible
     BASE_URL = "https://www.moswar.ru/alley/"
     LOCATORS = {
         # Timers
@@ -49,12 +48,14 @@ class Alley:
         "enemy_name_input": "TBA",
         "enemy_name_find": "TBA",
         # Patrol
-        "patrol_start_button": "TBA",
+        "patrol_start_button": (By.XPATH, '//button[@id="alley-patrol-button" and @class="button"]'),
         "patrol_leave_button": "TBA",
+        "patrol_select_minutes": (By.XPATH, '//*[@id="patrolForm"]/div[2]/select'),
         "patrol_active": (By.XPATH, "//td[@class='label' and text()='Патрулирование:']"),
         "patrol_time_left": (By.XPATH, '//form[@class="patrol" and @id="patrolForm"]//p[@class="timeleft"]'),
         # Patriot TV
-        "TV_start_button": "TBA",
+        "TV_select_hours": (By.XPATH, '//*[@id="patriottvForm"]/div/select'),
+        "TV_start_button": (By.XPATH, '//*[@id="alley-patriot-button"]'),
         "TV_active": (By.XPATH, "//td[@class='label' and text()='Просмотр:']"),
         "TV_time_left": (By.XPATH, '//form[@class="patrol" and @id="patriottvForm"]//p[@class="timeleft"]'),
     }
@@ -344,19 +345,63 @@ class Alley:
         """
         Checks if the player is currently on patrol.
         """
-        if self.driver.find_element(*self.LOCATORS["patrol_active"]):
-            logger.info("Player is currently on patrol.")
+        try:
+            self.driver.find_element(*self.LOCATORS["patrol_active"])
             self.player.on_patrol = True
             return True
-        else:
+        except NoSuchElementException:
             self.player.on_patrol = False
             return False
 
+    # TODO: check if correct when no time left
     def get_patrol_time_left(self) -> int:
         """
         Returns the remaining patrol time in minutes.
         """
-        pass
+        try:
+            time_left_el = self.driver.find_element(*self.LOCATORS["patrol_time_left"])
+            time_left = int(time_left_el.text.split(" ")[-2])
+        except Exception:
+            time_left = 0
+
+        self.player.patrol_time_left = time_left
+        return time_left
+
+    def start_patrol(self, patrol_minutes: Literal[20, 40]) -> None:
+        """
+        TBA
+        """
+        logger.info(f"Starting patrol for {patrol_minutes} minutes.")
+
+        if patrol_minutes not in [20, 40]:
+            logger.error("Invalid patrol minutes. Valid options are 20 or 40 minutes.")
+            return None
+
+        if self.player.on_patrol:
+            logger.error("Can't start patrol, player is already on patrol.")
+            return None
+
+        if self.player.patrol_time_left < patrol_minutes:
+            logger.error(
+                f"Can't start patrol for {patrol_minutes} minutes, only {self.player.patrol_time_left} minutes left."
+            )
+            return None
+
+        patrol_minutes_str = str(patrol_minutes) + " минут"
+        select_patrol_minutes_el = Select(self.driver.find_element(*self.LOCATORS["patrol_select_minutes"]))
+        select_patrol_minutes_el.select_by_visible_text(patrol_minutes_str)
+        random_delay()
+
+        start_patrol_el = self.driver.find_element(*self.LOCATORS["patrol_start_button"])
+        start_patrol_el.click()
+        random_delay(min_time=5, max_time=6)
+
+        if self.is_patrol_active():
+            self.player.on_patrol = True
+            self.player.patrol_time_left -= patrol_minutes
+            logger.info("Patrol successfully started.")
+        else:
+            logger.error("Failed to start patrol")
 
     # def start_patrol(self, patrol_minutes: int) -> None:
     #     """
@@ -444,19 +489,27 @@ class Alley:
         """
         Checks if the player is currently watching Patriot TV.
         """
-        if self.driver.find_element(*self.LOCATORS["TV_active"]):
-            logger.info("Player is currently watching Patriot TV.")
+        try:
+            self.driver.find_element(*self.LOCATORS["TV_active"])
             self.player.on_watch_patriot_TV = True
             return True
-        else:
+        except NoSuchElementException:
             self.player.on_watch_patriot_TV = False
             return False
 
-    def get_watch_patriot_TV_time_left(self) -> int:
+    # TODO: check if correct
+    def get_TV_time_left(self) -> int:
         """
         Returns the remaining Patriot TV watching time in minutes.
         """
-        pass
+        try:
+            time_left_el = self.driver.find_element(*self.LOCATORS["TV_time_left"])
+            time_left = int(time_left_el.text.split(" ")[-2])
+        except Exception:
+            time_left = 0
+
+        self.player.TV_time_left = time_left
+        return time_left
 
     # def watch_patriot_TV(self, watch_hours: int) -> None:
     #     """
