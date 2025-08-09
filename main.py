@@ -34,7 +34,11 @@ credentials = {"login": login, "password": password}
 driver = log_in(driver, credentials)
 
 # Player (TODO: fix cookies expiration)
-player = Player(driver, update_info_on_init=True)
+player = Player(driver, update_info_on_init=False)
+player.update_health_and_energy()
+player.update_stats()
+
+
 # player.use_item("Полезный пельмень", 140)
 player.show_info(show_all=True)
 

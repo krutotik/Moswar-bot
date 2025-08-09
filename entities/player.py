@@ -21,11 +21,14 @@ class Player:
     BASE_URL = "https://www.moswar.ru/player/"
     LOCATORS = {
         # Health and Energy
-        "hp_current": (By.XPATH, '//*[@id="personal"]//*[@id="hp_current"]'),
+        "hp_current": (By.XPATH, '//*[@id="personal"]//*[@id="currenthp"]'),
         "hp_max": (By.XPATH, '//*[@id="personal"]//*[@id="maxhp"]'),
         "mp_current": (By.XPATH, '//*[@id="personal"]//*[@id="currenttonus"]'),
         "mp_max": (By.XPATH, '//*[@id="personal"]//*[@id="maxenergy"]'),
         "stats": (By.CSS_SELECTOR, "li.stat"),
+        # Level related
+        "level": (By.XPATH, "//h3[@class='curves clear']/span[@class='user ']/span[@class='level']"),
+        "experience": (By.XPATH, "//div[@class='exp']"),
     }
 
     def __init__(self, driver: WebDriver, update_info_on_init: bool = True):
@@ -116,7 +119,7 @@ class Player:
                 "Player successfully initialized, however information about player status was not updated. Player is in underground."
             )
         else:
-            self.update_health_and_energy()
+            self.update_health_and_energy(is_refresh=False)
             self.update_stats()
             self.update_recourses_active()
             self.update_recourses_basic()
@@ -167,38 +170,23 @@ class Player:
         intuition, attention, charism, level, and experience.
         """
         logger.info("Updating player stats info.")
-        self.open()
 
-        # Map stat types to attributes and selectors
-        stats_map = {
-            "health": "li.stat.odd[data-type='health'] .label span.num",
-            "strength": "li.stat[data-type='strength'] .label span.num",
-            "dexterity": "li.stat.odd[data-type='dexterity'] .label span.num",
-            "resistance": "li.stat[data-type='resistance'] .label span.num",
-            "intuition": "li.stat.odd[data-type='intuition'] .label span.num",
-            "attention": "li.stat[data-type='attention'] .label span.num",
-            "charism": "li.stat.odd[data-type='charism'] .label span.num",
-        }
-
-        # Extract stats using the map
-        for stat, selector in stats_map.items():
-            element = self.driver.find_element(By.CSS_SELECTOR, selector)
+        # Stats
+        stats_list = ["health", "strength", "dexterity", "resistance", "intuition", "attention", "charism"]
+        for stat in stats_list:
+            element_adress = f"//li[@data-type='{stat}']//span[@class='num']"
+            element = self.driver.find_element(By.XPATH, element_adress)
             setattr(self, stat, int(element.text))
 
         # Level
-        level_el = self.driver.find_element(
-            By.XPATH,
-            "//h3[@class='curves clear']/span[@class='user ']/span[@class='level']",
-        )
-        self.level = int(level_el.text.strip("[]"))
+        self.level = int(self.driver.find_element(*self.LOCATORS["level"]).text.strip("[]"))
 
         # Experience
-        experience_el = self.driver.find_element(By.XPATH, "//div[@class='exp']")
+        experience_el = self.driver.find_element(*self.LOCATORS["experience"])
         current, needed = map(int, experience_el.text.split(" ")[1].split("/"))
         self.experience = current
         self.experience_needed_to_level = needed
 
-        # Warn if nearing level-up
         if needed - current <= 200:
             logger.warning("There are less than 200 experience points to level up.")
 
