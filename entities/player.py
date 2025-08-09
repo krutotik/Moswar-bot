@@ -90,7 +90,7 @@ class Player:
         # Player time left to do activities (TBA add refresh of those values)
         self.patrol_time_left = 0
         self.work_time_left = 0
-        self.watch_patriot_TV_time_left = 0
+        self.TV_time_left = 0
 
         # Update player status
         self.open()
