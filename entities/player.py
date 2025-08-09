@@ -215,10 +215,6 @@ class Player:
         """
         Updates the information about player's basic resources, including money, ore, oil, and honey.
         """
-        logger.info("Updating player basic recourses info.")
-        self.driver.refresh()
-        random_delay()
-
         basic_recourses_addr_dict = {
             "money": "//li[@class='tugriki-block']",
             "ore": "//li[@class='ruda-block']",
