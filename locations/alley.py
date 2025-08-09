@@ -13,7 +13,6 @@ from utils.human_simulation import random_delay
 
 # TODO:
 # update description and docstrings
-# move adresses of buttons to dict at the top of the file
 
 
 class Alley:
@@ -53,6 +52,10 @@ class Alley:
         "patrol_select_minutes": (By.XPATH, '//*[@id="patrolForm"]/div[2]/select'),
         "patrol_active": (By.XPATH, "//td[@class='label' and text()='Патрулирование:']"),
         "patrol_time_left": (By.XPATH, '//form[@class="patrol" and @id="patrolForm"]//p[@class="timeleft"]'),
+        # Caravan
+        "caravan_available": (By.XPATH, "//a[@href='/desert/']"),
+        "caravan_rob": (By.XPATH, "//a[contains(@href, '/desert/rob/')]"),
+        "caravan_result": (By.CLASS_NAME, "text"),
         # Patriot TV
         "TV_select_hours": (By.XPATH, '//*[@id="patriottvForm"]/div/select'),
         "TV_start_button": (By.XPATH, '//*[@id="alley-patriot-button"]'),
@@ -399,90 +402,51 @@ class Alley:
         if self.is_patrol_active():
             self.player.on_patrol = True
             self.player.patrol_time_left -= patrol_minutes
-            logger.info("Patrol successfully started.")
+            logger.info(
+                f"Patrol successfully started, patrol time left: {self.player.patrol_time_left} minutes."
+            )
         else:
             logger.error("Failed to start patrol")
 
-    # def start_patrol(self, patrol_minutes: int) -> None:
-    #     """
-    #     Starts a patrol for a specified duration if no patrol is currently active.
+    # CARAVAN
+    # TODO: test caravan functions
+    def is_caravan_available(self) -> bool:
+        """
+        Checks if a caravan is available in the alley.
+        """
+        try:
+            self.driver.find_element(*self.LOCATORS["caravan_available"])
+            return True
+        except NoSuchElementException:
+            return False
 
-    #     Parameters:
-    #         patrol_minutes (int): The duration of the patrol in minutes.
-    #                             Valid options are 20 or 40 minutes.
+    def rob_caravan(self) -> None:
+        """
+        Attempts to rob the caravan if available.
+        """
+        if not self.is_caravan_available():
+            logger.error("No caravan available to rob.")
+            return None
 
-    #     TODO:
-    #         2. Introduce an enum to enforce valid patrol duration options.
-    #         4. Verify if the patrol was successfully initiated or if the location was unavailable.
-    #         5. Finish caravan check code
-    #     """
-    #     logger.info(f"Starting patrol for {patrol_minutes} minutes.")
-    #     self.open()
+        try:
+            caravan_el_1 = self.driver.find_element(*self.LOCATORS["caravan_available"])
+            caravan_el_1.click()
+            random_delay()
 
-    #     # Transform minutes to string
-    #     patrol_minutes_str = str(patrol_minutes) + " минут"
-    #     logger.info(f"Transforming minutes to string: {patrol_minutes_str}")
+            caravan_el_2 = self.driver.find_element(*self.LOCATORS["caravan_rob"])
+            caravan_el_2.click()
+            random_delay()
 
-    #     # Check if there are no more minutes to patrol (later use player class to check how many minutes left)
-    #     try:
-    #         self.driver.find_element(
-    #             By.XPATH,
-    #             "//p[text()='На сегодня Вы уже истратили все время патрулирования.']",
-    #         )
-    #         logger.error("Can't start the patrol, there are no more minutes to patrol.")
-    #         return None
-    #     except NoSuchElementException:
-    #         pass
+            result_text = self.driver.find_element(*self.LOCATORS["caravan_result"]).text
+            if result_text.startswith("К сожалению"):
+                logger.info("Caravan farm failed :(")
+            else:
+                logger.info(f"Caravan farm successfully completed. Result: {result_text}")
+                self.player.money += 0  # TODO: Update with actual money farmed
+        except NoSuchElementException:
+            logger.error("Error while trying to rob the caravan")
 
-    #     # Check if patrol is already started
-    #     try:
-    #         leave_patrol_button = self.driver.find_element(By.XPATH, '//*[@id="leave-patrol-button"]')
-    #         self.player.on_patrol = True
-    #         logger.error("Can't start the patrol, player is already in patrol.")
-    #         return None
-    #     except NoSuchElementException:
-    #         pass
-
-    #     # Start patrol
-    #     select_patrol_minutes_el = Select(
-    #         self.driver.find_element(By.XPATH, '//*[@id="patrolForm"]/div[2]/select')
-    #     )
-    #     select_patrol_minutes_el.select_by_visible_text(patrol_minutes_str)
-    #     random_delay()
-
-    #     start_patrol_el = self.driver.find_element(
-    #         By.XPATH, '//button[@id="alley-patrol-button" and @class="button"]'
-    #     )
-    #     start_patrol_el.click()
-    #     random_delay()
-
-    # # Handle caravan
-    # try:
-    #     caravan_el_1 = self.driver.find_element(By.XPATH, "//*[@href='/desert/']")
-    #     logger.info("Caravan appeared, handling caravan.")
-    #     caravan_el_1.click()
-    #     random_delay()
-
-    #     caravan_el_2 = self.driver.find_element(By.XPATH, "//*[contains(@onclick, '/desert/rob/')]")
-    #     caravan_el_2.click()
-    #     random_delay()
-
-    #     result_text = self.driver.find_element(By.CLASS_NAME, "text").text
-    #     farmed_money = 0
-    #     if result_text.startswith("К сожалению"):
-    #         logger.info("Caravan farm failed :(")
-    #     else:
-    #         logger.info(f"Caravan farm successfully completed. Farmed {farmed_money}.")
-    #     self.driver.get(self.BASE_URL)
-    #     random_delay()
-    # except NoSuchElementException:
-    #     pass
-
-    # # Update player status
-    # self.player.on_patrol = True
-    # self.player.patrol_time_left -= patrol_minutes
-    # logger.info("Patrol successfully started.")
-    # return None
+        self.open()
 
     # PATRIOT TV
     def is_TV_active(self) -> bool:
@@ -491,10 +455,10 @@ class Alley:
         """
         try:
             self.driver.find_element(*self.LOCATORS["TV_active"])
-            self.player.on_watch_patriot_TV = True
+            self.player.on_TV = True
             return True
         except NoSuchElementException:
-            self.player.on_watch_patriot_TV = False
+            self.player.on_TV = False
             return False
 
     # TODO: check if correct
@@ -511,44 +475,40 @@ class Alley:
         self.player.TV_time_left = time_left
         return time_left
 
-    # def watch_patriot_TV(self, watch_hours: int) -> None:
-    #     """
-    #     Starts a patriot TV session for a specified duration if not currently active.
+    # TODO: check if correct
+    def start_watching_TV(self, watch_hours: Literal[1]) -> None:
+        """
+        TBA
+        """
+        logger.info(f"Starting Patriot TV session for {watch_hours} hour(s).")
 
-    #     Parameters:
-    #         watch_hours (int): The duration of the watching session in hours.
-    #                             Valid option is 1 hour.
+        if watch_hours != 1:
+            logger.error("Invalid watch hours. Only 1 hour is allowed.")
+            return None
 
-    #     TODO:
-    #         1. update player parameter, when watching will end, by which time watching will end and how many hours left
-    #     """
-    #     logger.info(f"Starting patriot TV session for {watch_hours} hours.")
-    #     self.open()
+        if self.player.on_TV:
+            logger.error("Can't start watching Patriot TV, player is already watching.")
+            return None
 
-    #     # Transform minutes to string
-    #     watch_hours_str = str(watch_hours) + " час"
-    #     logger.info(f"Transforming hours to string: {watch_hours_str}")
+        if self.player.TV_time_left < watch_hours:
+            logger.error(
+                f"Can't start watching Patriot TV for {watch_hours} hour(s), only {self.player.TV_time_left} hours left."
+            )
+            return None
 
-    #     # Start watching sessing if not already started
-    #     try:
-    #         select_watch_hours_el = Select(
-    #             self.driver.find_element(By.XPATH, '//*[@id="patriottvForm"]/div/select')
-    #         )
-    #     except NoSuchElementException:
-    #         logger.error(
-    #             "Can't start watching patriot TV, no hours left or player is watching patriot TV right now."
-    #         )
-    #         return None
+        select_watch_hours_el = Select(self.driver.find_element(*self.LOCATORS["TV_select_hours"]))
+        select_watch_hours_el.select_by_visible_text(f"{watch_hours} час")
+        random_delay()
 
-    #     select_watch_hours_el.select_by_visible_text(watch_hours_str)
-    #     random_delay()
+        start_watch_el = self.driver.find_element(*self.LOCATORS["TV_start_button"])
+        start_watch_el.click()
+        random_delay(min_time=5, max_time=6)
 
-    #     start_watch_el = self.driver.find_element(By.XPATH, '//*[@id="alley-patrol-button"]')
-    #     start_watch_el.click()
-    #     random_delay()
-
-    #     # Update player status
-    #     self.player.on_watch_patriot_TV = True
-    #     self.player.watch_patriot_TV_time_left -= watch_hours
-    #     logger.info("Patriot TV session successfully started.")
-    #     return None
+        if self.is_TV_active():
+            self.player.on_TV = True
+            self.player.TV_time_left -= watch_hours
+            logger.info(
+                f"Patriot TV session successfully started, time left: {self.player.TV_time_left} hours."
+            )
+        else:
+            logger.error("Failed to start Patriot TV session")
