@@ -31,6 +31,7 @@ class Alley:
         # Rest timers
         "rest_timer": (By.XPATH, "//span[@class='timer' and contains(@trigger, 'end_alley_cooldown')]"),
         "rest_reset_enegry": (By.XPATH, "//div[@onclick=\"cooldownReset('tonus');\"]"),
+        "rest_reset_enegry_cost": (By.XPATH, "//span[@class='tonus']"),
         "rest_reset_snikers": (By.XPATH, "//div[@onclick=\"cooldownReset('snikers');\"]"),
         # Enemy search start
         "enemy_weak": (By.CSS_SELECTOR, ".button-big.btn.f1"),
@@ -107,7 +108,6 @@ class Alley:
             self.player.on_rest = True
             return True
 
-    # TODO: add check for available energy
     def reset_rest_timer(self, reset_timer_type: ResetTimerType) -> None:
         """
         Resets the rest timer by using energy or snickers.
@@ -116,10 +116,22 @@ class Alley:
             logger.error("Player is not resting, can't reset the timer.")
             return None
 
+        # Reset
         if reset_timer_type == reset_timer_type.ENERGY:
             logger.info("Resetting energy timer by using enegry.")
-            self.driver.find_element(*self.LOCATORS["rest_reset_enegry"]).click()
+
+            energy_cost = float(self.driver.find_element(*self.LOCATORS["rest_reset_enegry_cost"]).text)
+            if self.player.currentmp < energy_cost:
+                logger.error(
+                    f"Not enough energy to reset the timer. Current energy: {self.player.currentmp}, required: {energy_cost}"
+                )
+                return None
+            else:
+                self.driver.find_element(*self.LOCATORS["rest_reset_enegry"]).click()
+                self.player.currentmp -= energy_cost
+                logger.info(f"Energy timer reset, current energy: {self.player.currentmp}")
             random_delay()
+
         elif reset_timer_type == reset_timer_type.SNICKERS:
             logger.info("Resetting rest timer by using sneakers.")
 
@@ -131,6 +143,7 @@ class Alley:
             self.player.snickers -= 1
             random_delay()
 
+        # Check
         random_delay(min_time=5, max_time=6)
         self.driver.refresh()
         if not self.is_rest_active():
@@ -188,7 +201,6 @@ class Alley:
         self.driver.find_element(*self.LOCATORS["enemy_level_find"]).click()
         random_delay()
 
-    # TODO: add if finished on search page
     def start_enemy_search(
         self,
         enemy_search_type: EnemySearchType,
@@ -204,6 +216,7 @@ class Alley:
             logger.error("Player is resting, can't start enemy search.")
             return None
 
+        # Search
         if enemy_search_type == enemy_search_type.WEAK:
             self.driver.find_element(*self.LOCATORS["enemy_weak"]).click()
             random_delay()
@@ -220,6 +233,9 @@ class Alley:
 
         if not self.driver.current_url.startswith(self.BASE_URL + "search/"):
             logger.error("Failed to start enemy search, driver is not on the search page.")
+
+        # Check
+        # TODO: check if on search page
 
     # TODO: add check if on search page
     def finish_enemy_search(self) -> None:
@@ -296,6 +312,7 @@ class Alley:
         """
         logger.info(f"Starting patrol for {patrol_minutes} minutes.")
 
+        # Error checks
         if patrol_minutes not in [20, 40]:
             logger.error("Invalid patrol minutes. Valid options are 20 or 40 minutes.")
             return None
@@ -311,6 +328,7 @@ class Alley:
             )
             return None
 
+        # Start patrol
         patrol_minutes_str = str(patrol_minutes) + " минут"
         select_patrol_minutes_el = Select(self.driver.find_element(*self.LOCATORS["patrol_select_minutes"]))
         select_patrol_minutes_el.select_by_visible_text(patrol_minutes_str)
@@ -318,8 +336,9 @@ class Alley:
 
         start_patrol_el = self.driver.find_element(*self.LOCATORS["patrol_start_button"])
         start_patrol_el.click()
-        random_delay(min_time=5, max_time=6)
 
+        # Check
+        random_delay(min_time=5, max_time=6)
         if self.is_patrol_active():
             self.player.patrol_time_left -= patrol_minutes
             logger.info(
@@ -402,6 +421,7 @@ class Alley:
         """
         logger.info(f"Starting Patriot TV session for {watch_hours} hour(s).")
 
+        # Error checks
         if watch_hours != 1:
             logger.error("Invalid watch hours. Only 1 hour is allowed.")
             return None
@@ -417,14 +437,16 @@ class Alley:
             )
             return None
 
+        # Start watching TV
         select_watch_hours_el = Select(self.driver.find_element(*self.LOCATORS["TV_select_hours"]))
         select_watch_hours_el.select_by_visible_text(f"{watch_hours} час")
         random_delay()
 
         start_watch_el = self.driver.find_element(*self.LOCATORS["TV_start_button"])
         start_watch_el.click()
-        random_delay(min_time=5, max_time=6)
 
+        # Check
+        random_delay(min_time=5, max_time=6)
         if self.is_TV_active():
             self.player.TV_time_left -= watch_hours
             logger.info(
