@@ -80,6 +80,7 @@ class Player:
         self.snickers = 0
 
         # Player statuses
+        self.on_rest = False
         self.on_patrol = False
         self.on_work = False
         self.on_TV = False
