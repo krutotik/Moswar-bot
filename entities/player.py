@@ -400,62 +400,67 @@ class Player:
         Parameters:
             show_all (bool): If True, displays additional player details. Default is False.
         """
-        print("Текущие состояния игрока:")
-        print(f"Здоровье: {self.hp_current:,}/{self.hp_max:,} ({self.hp_current_prc * 100:.2f}%)")
-        print(f"Энергия: {self.mp_current:,}/{self.mp_max:,} ({self.mp_current_prc * 100:.2f}%)")
-        print("\n")
-        print("Текущие базовые ресурсы игрока:")
-        print(f"Тугрики: {self.money:,}")
-        print(f"Руда: {self.ore:,}")
-        print(f"Нефть: {self.oil:,}")
-        print(f"Мёд: {self.honey:,}")
-        print("\n")
-        print(f"Текущий уровень игрока: {self.level:,}")
-        print(f"Опыта до следующего уровня: {self.experience_needed_to_level - self.experience:,}")
-        print("\n")
-        print("Текущие активности игрока:")
-        print(f"В бою: {'Да' if self.in_battle else 'Нет'}")
-        print(f"В подземке: {'Да' if self.in_underground else 'Нет'}")
-        print(f"Патрулирует: {'Да' if self.on_patrol else 'Нет'}")
-        print(f"Работает: {'Да' if self.on_work else 'Нет'}")
-        print(f"Смотрит Патриот-ТВ: {'Да' if self.on_TV else 'Нет'}")
-        print(f"Статус мажора: {'Да' if self.is_major else 'Нет'}")
-
-        print("\n")
-        print("Количество оставшегося времени на актиновсти:")
-        print(f"Патрулирование: {self.patrol_time_left} минут")
-        print(f"Патриот-ТВ: {self.TV_time_left} часов")
-        print(f"Работа: {self.work_time_left} часов")
+        info = [
+            "Текущие состояния игрока:",
+            f"Здоровье: {self.hp_current:,}/{self.hp_max:,} ({self.hp_current_prc * 100:.2f}%)",
+            f"Энергия: {self.mp_current:,}/{self.mp_max:,} ({self.mp_current_prc * 100:.2f}%)",
+            "",
+            "Текущие базовые ресурсы игрока:",
+            f"Тугрики: {self.money:,}",
+            f"Руда: {self.ore:,}",
+            f"Нефть: {self.oil:,}",
+            f"Мёд: {self.honey:,}",
+            "",
+            f"Текущий уровень игрока: {self.level:,}",
+            f"Опыта до следующего уровня: {self.experience_needed_to_level - self.experience:,}",
+            "",
+            "Текущие активности игрока:",
+            f"В бою: {'Да' if self.in_battle else 'Нет'}",
+            f"В подземке: {'Да' if self.in_underground else 'Нет'}",
+            f"Патрулирует: {'Да' if self.on_patrol else 'Нет'}",
+            f"Работает: {'Да' if self.on_work else 'Нет'}",
+            f"Смотрит Патриот-ТВ: {'Да' if self.on_TV else 'Нет'}",
+            f"Статус мажора: {'Да' if self.is_major else 'Нет'}",
+            "",
+            "Количество оставшегося времени на актиновсти:",
+            f"Патрулирование: {self.patrol_time_left} минут",
+            f"Патриот-ТВ: {self.TV_time_left} часов",
+            f"Работа: {self.work_time_left} часов",
+        ]
 
         if show_all:
-            print("\n")
-            print("Текущие дополнительные ресурсы игрока:")
-            print(f"Мобилы: {self.mobiles:,}")
-            print(f"Звёзды: {self.stars:,}")
-            print(f"Токены охотника: {self.hunter_tokens:,}")
-            print(f"Белые зубы: {self.tooth_white:,}")
-            print(f"Медали питомцев: {self.pet_medals:,}")
-            print(f"Державы: {self.powers:,}")
-            print(f"Патриотизм: {self.patriotisms:,}")
-            print(f"Долги: {self.debts:,}")
-            print(f"Фишки в казино: {self.casino_chips:,}")
-            print("\n")
-            print("Текущие ресурсы игрока  из инвенторя:")
-            print(f"Пельмени: {self.pielmienies:,}")
-            print(f"Тонусы: {self.tonuses:,}")
-            print(f"Сникерсы: {self.snickers:,}")
-            print(f"(Кругосветка) Смена босса: {self.travel_shuffles:,}")
-            print(f"(Кругосветка) Праймари пассы: {self.travel_passes:,}")
-            print(f"Кубики Москвополии: {self.moskowpoly_dices:,}")
-            print("\n")
-            print("Текущие характеристики игрока:")
-            print(f"Здоровье: {self.health:,}")
-            print(f"Сила: {self.strength:,}")
-            print(f"Ловкость: {self.dexterity:,}")
-            print(f"Выносливость: {self.resistance:,}")
-            print(f"Хитрость: {self.intuition:,}")
-            print(f"Внимательность: {self.attention:,}")
-            print(f"Харизма: {self.charism:,}")
+            info += [
+                "",
+                "Текущие дополнительные ресурсы игрока:",
+                f"Мобилы: {self.mobiles:,}",
+                f"Звёзды: {self.stars:,}",
+                f"Токены охотника: {self.hunter_tokens:,}",
+                f"Белые зубы: {self.tooth_white:,}",
+                f"Медали питомцев: {self.pet_medals:,}",
+                f"Державы: {self.powers:,}",
+                f"Патриотизм: {self.patriotisms:,}",
+                f"Долги: {self.debts:,}",
+                f"Фишки в казино: {self.casino_chips:,}",
+                "",
+                "Текущие ресурсы игрока  из инвенторя:",
+                f"Пельмени: {self.pielmienies:,}",
+                f"Тонусы: {self.tonuses:,}",
+                f"Сникерсы: {self.snickers:,}",
+                f"(Кругосветка) Смена босса: {self.travel_shuffles:,}",
+                f"(Кругосветка) Праймари пассы: {self.travel_passes:,}",
+                f"Кубики Москвополии: {self.moskowpoly_dices:,}",
+                "",
+                "Текущие характеристики игрока:",
+                f"Здоровье: {self.health:,}",
+                f"Сила: {self.strength:,}",
+                f"Ловкость: {self.dexterity:,}",
+                f"Выносливость: {self.resistance:,}",
+                f"Хитрость: {self.intuition:,}",
+                f"Внимательность: {self.attention:,}",
+                f"Харизма: {self.charism:,}",
+            ]
+
+        print("\n".join(info))
 
     # ------------------------
     # PLAYER ACTIONS
