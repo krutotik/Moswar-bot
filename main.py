@@ -50,7 +50,6 @@ player.show_info(show_all=True)
 
 # Alley fighting
 alley = Alley(player, driver)
-
 alley.open()
 
 alley.is_patrol_active()
@@ -65,6 +64,13 @@ alley.start_watching_TV(1)
 alley.is_rest_active()
 alley.reset_rest_timer(ResetTimerType.ENERGY)
 alley.start_enemy_search(EnemySearchType.BY_LEVEL, enemy_level_min=16, enemy_level_max=16)
+alley.finish_enemy_search()
+
+for i in range(10):
+    if alley.is_rest_active():
+        alley.reset_rest_timer(ResetTimerType.ENERGY)
+    alley.start_enemy_search(EnemySearchType.BY_LEVEL, enemy_level_min=16, enemy_level_max=16)
+    alley.finish_enemy_search()
 
 
 timer = driver.find_element(By.XPATH, "//span[@class='timer' and contains(@trigger, 'end_alley_cooldown')]")
