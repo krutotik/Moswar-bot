@@ -27,16 +27,19 @@ load_dotenv()
 options = set_options()
 driver = webdriver.Chrome(options=options)
 
-# Login
+# Login (TODO: fix cookies expiration)
 login = os.getenv("LOGIN", "default_login")
 password = os.getenv("PASSWORD", "default_password")
 credentials = {"login": login, "password": password}
 driver = log_in(driver, credentials)
 
-# Player (TODO: fix cookies expiration)
+# Player test
 player = Player(driver, update_info_on_init=False)
 player.update_health_and_energy()
 player.update_stats()
+player.update_major_status()
+player.open()
+player.update_recourses_basic()
 
 
 # player.use_item("Полезный пельмень", 140)

@@ -29,6 +29,14 @@ class Player:
         # Level related
         "level": (By.XPATH, "//h3[@class='curves clear']/span[@class='user ']/span[@class='level']"),
         "experience": (By.XPATH, "//div[@class='exp']"),
+        # Major status
+        "major_status": (By.XPATH, "//p[contains(text(), 'Ваш статус мажора закончится')]"),
+        # Player basic resources
+        "money": (By.XPATH, "//li[@class='tugriki-block']"),
+        "ore": (By.XPATH, "//li[@class='ruda-block']"),
+        "oil": (By.XPATH, "//li[@class='neft-block']"),
+        "honey": (By.XPATH, "//li[@class='med-block']"),
+        # Player advanced resources
     }
 
     def __init__(self, driver: WebDriver, update_info_on_init: bool = True):
@@ -193,13 +201,15 @@ class Player:
     def update_major_status(self) -> None:
         """
         Updates the information about player's "major" status based on data from the stash page.
+
+        TODO: potententially move to separate location class
         """
         logger.info("Updating major status.")
         self.driver.get("https://www.moswar.ru/stash/")
         random_delay()
 
         try:
-            self.driver.find_element(By.XPATH, "//p[contains(text(), 'Ваш статус мажора закончится')]")
+            self.driver.find_element(*self.LOCATORS["major_status"])
             self.is_major = True
         except NoSuchElementException:
             self.is_major = False
@@ -208,15 +218,9 @@ class Player:
         """
         Updates the information about player's basic resources, including money, ore, oil, and honey.
         """
-        basic_recourses_addr_dict = {
-            "money": "//li[@class='tugriki-block']",
-            "ore": "//li[@class='ruda-block']",
-            "oil": "//li[@class='neft-block']",
-            "honey": "//li[@class='med-block']",
-        }
-
-        for recourse, addr in basic_recourses_addr_dict.items():
-            recourse_attr = self.driver.find_element(By.XPATH, addr).get_attribute("title")
+        basic_recourses_list = ["money", "ore", "oil", "honey"]
+        for recourse in basic_recourses_list:
+            recourse_attr = self.driver.find_element(*self.LOCATORS[recourse]).get_attribute("title")
             if recourse_attr:
                 recourse_value = int(recourse_attr.split(" ")[1])
                 setattr(self, recourse, recourse_value)
