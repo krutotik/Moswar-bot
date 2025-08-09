@@ -40,11 +40,17 @@ class Shaurburgers:
         self.player = player
         self.driver = driver
 
+    def is_opened(self) -> bool:
+        """
+        Check if the driver is currently on the Shaurburgers page.
+        """
+        return self.driver.current_url == self.BASE_URL
+
     def open(self) -> None:
         """
         Ensure the driver is on the Shaurburgers page, navigating or refreshing as needed
         """
-        if self.driver.current_url != self.BASE_URL:
+        if not self.is_opened():
             logger.info("Driver is not on the shaurburgers page. Going to the shaurburgers.")
             self.driver.get(self.BASE_URL)
             random_delay()
