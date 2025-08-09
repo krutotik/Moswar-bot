@@ -221,28 +221,36 @@ class Player:
         """
         logger.info("Updating player stats info.")
 
-        if not self.is_opened():
-            logger.error("Cannot update player stats, driver is not on the player page.")
-            return None
+        try:
+            # Stats
+            stats_list = [
+                "health",
+                "strength",
+                "dexterity",
+                "resistance",
+                "intuition",
+                "attention",
+                "charism",
+            ]
+            for stat in stats_list:
+                element_adress = f"//li[@data-type='{stat}']//span[@class='num']"
+                element = self.driver.find_element(By.XPATH, element_adress)
+                setattr(self, stat, int(element.text))
 
-        # Stats
-        stats_list = ["health", "strength", "dexterity", "resistance", "intuition", "attention", "charism"]
-        for stat in stats_list:
-            element_adress = f"//li[@data-type='{stat}']//span[@class='num']"
-            element = self.driver.find_element(By.XPATH, element_adress)
-            setattr(self, stat, int(element.text))
+            # Level
+            self.level = int(self.driver.find_element(*self.LOCATORS["level"]).text.strip("[]"))
 
-        # Level
-        self.level = int(self.driver.find_element(*self.LOCATORS["level"]).text.strip("[]"))
+            # Experience
+            experience_el = self.driver.find_element(*self.LOCATORS["experience"])
+            current, needed = map(int, experience_el.text.split(" ")[1].split("/"))
+            self.experience = current
+            self.experience_needed_to_level = needed
 
-        # Experience
-        experience_el = self.driver.find_element(*self.LOCATORS["experience"])
-        current, needed = map(int, experience_el.text.split(" ")[1].split("/"))
-        self.experience = current
-        self.experience_needed_to_level = needed
+            if needed - current <= 200:
+                logger.warning("There are less than 200 experience points to level up.")
 
-        if needed - current <= 200:
-            logger.warning("There are less than 200 experience points to level up.")
+        except NoSuchElementException as e:
+            logger.error(f"Error updating player stats: {e}")
 
     def update_major_status(self) -> None:
         """
@@ -269,9 +277,9 @@ class Player:
             try:
                 recourse_attr = self.driver.find_element(*self.LOCATORS[recourse]).get_attribute("title")
                 value = int(recourse_attr.split(" ")[1]) if recourse_attr else 0
+                setattr(self, recourse, value)
             except NoSuchElementException:
-                value = 0
-            setattr(self, recourse, value)
+                logger.error(f"Basic recourse '{recourse}' not found on the page, it will not be updated.")
 
     # TODO: add casino_chips
     def update_recourses_advanced(self) -> None:
@@ -299,9 +307,9 @@ class Player:
             try:
                 xpath = base_xpath + self.LOCATORS[recourse][1]
                 value = int(self.driver.find_element(By.XPATH, xpath).text.replace(",", ""))
+                setattr(self, recourse, value)
             except Exception:
-                value = 0
-            setattr(self, recourse, value)
+                logger.error(f"Advanced recourse '{recourse}' not found on the page, it will not be updated.")
 
     # TODO: travel_passes, moskowpoly_dices, irons
     def update_recourses_inventory(self) -> None:
@@ -309,17 +317,16 @@ class Player:
         Updates player's resources which can be found only in the inventory.
         """
         logger.info("Updating player inventory recourses info.")
-        if not self.is_opened():
-            logger.error("Cannot update player inventory recourses, driver is not on the player page.")
-            return None
 
         inventory_recourses = ["pielmienies", "tonuses", "snickers"]
         for recourse in inventory_recourses:
             try:
                 value = int(self.driver.find_element(*self.LOCATORS[recourse]).text.replace("#", ""))
+                setattr(self, recourse, value)
             except NoSuchElementException:
-                value = 0
-            setattr(self, recourse, value)
+                logger.error(
+                    f"Inventory recourse '{recourse}' not found on the page, it will not be updated."
+                )
 
     def is_in_battle(self, is_refresh: bool = False) -> bool:
         """
@@ -385,7 +392,6 @@ class Player:
             # self.update_watch_patriot_TV_status()
             # self.update_work_status()
 
-    # TODO: add info when was the last time this info was updated?
     def show_info(self, show_all: bool = False) -> None:
         """
         Displays information about the player's current state, including health, energy,
