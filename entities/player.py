@@ -342,6 +342,7 @@ class Player:
         if self.in_battle or self.in_underground:
             logger.error("Cannot update other status while in battle or underground.")
         else:
+            pass
             # self.update_patrol_status()
             # self.update_watch_patriot_TV_status()
             # self.update_work_status()
