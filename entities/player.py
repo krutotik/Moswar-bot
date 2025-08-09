@@ -99,8 +99,8 @@ class Player:
 
         # Update player status
         self.open()
-        self.update_battle_status(is_refresh=False, verbose=False)
-        self.update_underground_status(is_refresh=False, verbose=False)
+        self.is_in_battle(is_refresh=False)
+        self.is_in_underground(is_refresh=False, verbose=False)
 
         if not update_info_on_init:
             logger.warning("Player successfully initialized, however player info was not updated.")
@@ -282,58 +282,43 @@ class Player:
                 recourse_value = 0
             setattr(self, recourse, recourse_value)
 
-    def update_battle_status(self, is_refresh: bool = True, verbose: bool = True) -> None:
+    def is_in_battle(self, is_refresh: bool = False) -> bool:
         """
-        Updates the player's in-battle status.
-
-        If the player is currently in a battle, updates the `in_battle` attribute to True
-        and logs the status. If not, sets `in_battle` to False.
-
-        Parameters:
-            is_refresh (bool): Whether to refresh the page before checking the battle status. Defaults to True.
-            verbose (bool): Whether to log the update process. Defaults to True.
+        Return True if the player is currently in battle, else False.
         """
-        if verbose:
-            logger.info("Updating in battle status.")
-
         if is_refresh:
             self.driver.refresh()
             random_delay()
 
         if self.driver.current_url.startswith("https://www.moswar.ru/fight/"):
             self.in_battle = True
+            return True
         else:
             self.in_battle = False
+            return False
 
-        if verbose:
-            logger.info(f"In battle status: {self.in_battle}")
+        # TODO: Finish later, better to use separate function
+        # if not self.in_battle and self.current_blocking_activity == "battle":
+        #     self.current_blocking_activity = None
 
-    def update_underground_status(self, is_refresh: bool = True, verbose: bool = True) -> None:
+    def is_in_underground(self, is_refresh: bool = False) -> bool:
         """
-        Updates the player's in-underground status.
-
-        Checks if the player is currently in the underground and updates the `in_underground` attribute accordingly.
-        Logs the status and stops further updates if the player is underground.
-
-        Parameters:
-            is_refresh (bool): Whether to refresh the page before checking the underground status. Defaults to True.
-            verbose (bool): Whether to log the update process. Defaults to True.
+        Return True if the player is currently in underground, else False.
         """
         if is_refresh:
             self.driver.refresh()
             random_delay()
 
-        if verbose:
-            logger.info("Updating in undeground status.")
-
-        try:
-            self.driver.find_element(By.XPATH, "//span[@class='text' and text()='В туннелях метро']")
+        if self.driver.current_url.startswith("https://www.moswar.ru/dungeon/inside/"):
             self.in_underground = True
-        except NoSuchElementException:
+            return True
+        else:
             self.in_underground = False
+            return False
 
-        if verbose:
-            logger.info(f"In undeground status: {self.in_underground}")
+        # TODO: Finish later, better to use separate function
+        # if not self.in_underground and self.current_blocking_activity == "underground":
+        #     self.current_blocking_activity = None
 
     def update_work_status(self) -> None:
         """
@@ -384,8 +369,8 @@ class Player:
         logger.info("Updating all player activities status.")
 
         # Restrictive statuses
-        self.update_battle_status(is_refresh=True)
-        self.update_underground_status(is_refresh=False)
+        self.is_in_battle(is_refresh=True)
+        self.is_in_underground(is_refresh=False)
 
         # Non-restrictive statuses if possible
         if self.in_battle or self.in_underground:
