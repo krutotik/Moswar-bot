@@ -82,7 +82,7 @@ class Player:
         # Player statuses
         self.on_patrol = False
         self.on_work = False
-        self.on_watch_patriot_TV = False
+        self.on_TV = False
         self.in_battle = False
         self.in_underground = False
         self.is_major = False
@@ -334,80 +334,6 @@ class Player:
         if verbose:
             logger.info(f"In undeground status: {self.in_underground}")
 
-    # fix function, does not retrive the time left correctly
-    def update_patrol_status(self) -> None:
-        """
-        Updates the player's patrol status and remaining patrol time.
-
-        Checks if the player is currently on patrol and updates the `on_patrol` attribute.
-        Also retrieves the remaining patrol time (in minutes) and updates the `patrol_time_left` attribute.
-        Logs the patrol status and remaining time.
-        """
-        # Patrol status
-        logger.info("Updating patrol status.")
-        self.driver.get("https://www.moswar.ru/alley/")
-        random_delay()
-
-        try:
-            self.driver.find_element(By.XPATH, "//td[@class='label' and text()='Патрулирование:']")
-            self.on_patrol = True
-        except NoSuchElementException:
-            self.on_patrol = False
-
-            # Patrol time left TODO: find bug, sometimes it's not updated
-            remaining_time_el_text = self.driver.find_element(
-                By.XPATH,
-                '//form[@class="patrol" and @id="patrolForm"]//p[@class="timeleft"]',
-            ).text
-            if remaining_time_el_text.startswith("На сегодня"):
-                self.patrol_time_left = 0
-            else:
-                match = re.search(r"(\d+)", remaining_time_el_text)
-                if match:
-                    self.patrol_time_left = int(match.group(1))
-        except NoSuchElementException:
-            self.patrol_time_left = 0
-
-        logger.info(f"Patrol status: {self.on_patrol}")
-        logger.info(f"Patrol time left: {self.patrol_time_left} minutes.")
-
-    def update_watch_patriot_TV_status(self) -> None:
-        """
-        Updates the player's status for watching Patriot TV and remaining time.
-
-        Checks if the player is currently watching Patriot TV and updates the `on_watch_patriot_TV` attribute.
-        Also retrieves the remaining watching time (in hours) and updates the `watch_patriot_TV_time_left` attribute.
-        Logs the Patriot TV status and remaining time.
-        """
-        # Patriot TV status
-        logger.info("Updating patriot TV status.")
-        self.driver.get("https://www.moswar.ru/alley/")
-        random_delay()
-
-        try:
-            self.driver.find_element(By.XPATH, "//td[@class='label' and text()='Просмотр:']")
-            self.on_watch_patriot_TV = True
-        except NoSuchElementException:
-            self.on_watch_patriot_TV = False
-
-        # Patriot TV time left
-        try:
-            remaining_time_el_text = self.driver.find_element(
-                By.XPATH,
-                '//form[@class="patrol" and @id="patriottvForm"]//p[@class="timeleft"]',
-            ).text
-            if remaining_time_el_text.startswith("На сегодня"):
-                self.watch_patriot_TV_time_left = 0
-            else:
-                match = re.search(r"(\d+)", remaining_time_el_text)
-                if match:
-                    self.watch_patriot_TV_time_left = int(match.group(1))
-        except NoSuchElementException:
-            self.watch_patriot_TV_time_left = 0
-
-        logger.info(f"Patriot TV status: {self.on_watch_patriot_TV}")
-        logger.info(f"Patriot TV time left: {self.watch_patriot_TV_time_left} hours.")
-
     def update_work_status(self) -> None:
         """
         Updates the player's work status and remaining work time.
@@ -443,6 +369,7 @@ class Player:
         logger.info(f"Work status: {self.on_work}")
         logger.info(f"Work time left: {self.work_time_left} hours.")
 
+    # TODO: fix this, it is not working
     def update_all_actvities_status(self) -> None:
         """
         Updates all player activity statuses, both restrictive and non-restrictive.
@@ -463,8 +390,8 @@ class Player:
         if self.in_battle or self.in_underground:
             logger.error("Cannot update other status while in battle or underground.")
         else:
-            self.update_patrol_status()
-            self.update_watch_patriot_TV_status()
+            # self.update_patrol_status()
+            # self.update_watch_patriot_TV_status()
             self.update_work_status()
 
     # TODO: add info when was the last time this info was updated?
@@ -498,13 +425,13 @@ class Player:
         print(f"В подземке: {'Да' if self.in_underground else 'Нет'}")
         print(f"Патрулирует: {'Да' if self.on_patrol else 'Нет'}")
         print(f"Работает: {'Да' if self.on_work else 'Нет'}")
-        print(f"Смотрит Патриот-ТВ: {'Да' if self.on_watch_patriot_TV else 'Нет'}")
+        print(f"Смотрит Патриот-ТВ: {'Да' if self.on_TV else 'Нет'}")
         print(f"Статус мажора: {'Да' if self.is_major else 'Нет'}")
 
         print("\n")
         print("Количество оставшегося времени на актиновсти:")
         print(f"Патрулирование: {self.patrol_time_left} минут")
-        print(f"Патриот-ТВ: {self.watch_patriot_TV_time_left} часов")
+        print(f"Патриот-ТВ: {self.TV_time_left} часов")
         print(f"Работа: {self.work_time_left} часов")
 
         if show_all:
