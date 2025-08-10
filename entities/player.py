@@ -1,10 +1,12 @@
+from typing import Literal
+
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
-from tqdm import tqdm
 
 from schemas.player import RestoreEnergyType
 from utils.custom_logging import logger
+from utils.general import require_location_page
 from utils.human_simulation import random_delay
 
 # TODO: add status of the player, searching< fighting, etc.
@@ -213,6 +215,7 @@ class Player:
         self.mp_current = float(mp_current_el.text)
         self.mp_current_prc = self.mp_current / self.mp_max
 
+    @require_location_page
     def update_stats(self) -> None:
         """
         Updates player's stats, including health, strength, dexterity, resistance,
@@ -310,6 +313,7 @@ class Player:
             except Exception:
                 logger.error(f"Advanced recourse '{recourse}' not found on the page, it will not be updated.")
 
+    @require_location_page
     def update_recourses_inventory(self) -> None:
         """
         Updates player's resources which can be found only in the inventory.
@@ -435,7 +439,7 @@ class Player:
         self.update_major_status()
         self.update_actvities_status_non_blocking()
 
-    def show_info(self, show_all: bool = False) -> None:
+    def show_player_info(self, show_all: bool = False) -> None:
         """
         Displays information about the player's current state, including health, energy,
         resources, and activities. Optionally shows additional resources and attributes.
@@ -570,52 +574,67 @@ class Player:
             elif restore_by == RestoreEnergyType.ORE:
                 self.ore -= 1
 
-    # TODO: refactor function + add minus in recources when using this
-    def use_item(self, item: str, times: int) -> None:
+    @require_location_page
+    def use_item(self, item: Literal["pielmienies", "tonuses", "snickers"], times: int) -> None:
         """
-        Uses a specified item from the inventory a given number of times.
+        TBA
+        """
+        if not self.is_opened():
+            logger.error("Player page is not opened, cannot use item.")
+            return None
 
-        Parameters:
-            item (str): The name of the item to be used.
-            times (int): The number of times the item should be used.
-        """
+        if item not in ["pielmienies", "tonuses", "snickers"]:
+            logger.error(f"Item '{item}' is not supported for use.")
+            return None
+
         logger.info(f"Using '{item}' for {times} times.")
-        self.open()
 
-        # Find item address TODO: create dict with item adresses in class dict?
-        # add that se can use itmes only from dict with available items
-        if item == "Полезный пельмень":
-            logger.info("Eating pielmienies, nyam nyam.")
-            item_el_addr = '//*[@id="inventory-stat_stimulator-btn"]'
-        else:
-            logger.error(f"Item '{item}' is not supported.")
-            return None
+    # TODO: refactor function + add minus in recources when using this
+    # def use_item(self, item: str, times: int) -> None:
+    #     """
+    #     Uses a specified item from the inventory a given number of times.
 
-        # Try to find item on page
-        try:
-            item_el = self.driver.find_element(By.XPATH, item_el_addr)
-        except NoSuchElementException:
-            logger.error(f"Item '{item}' is not available.")
-            return None
+    #     Parameters:
+    #         item (str): The name of the item to be used.
+    #         times (int): The number of times the item should be used.
+    #     """
+    #     logger.info(f"Using '{item}' for {times} times.")
+    #     self.open()
 
-        # Stop function if there are less items available than we want to use
-        count_el = item_el.find_element(By.XPATH, "../*[@class='count']")
-        count = int(count_el.text.replace("#", ""))
-        if count < times:
-            logger.error(f"Not enough '{item}' to use {times} times. There are only {count} available.")
-            return None
+    #     # Find item address TODO: create dict with item adresses in class dict?
+    #     # add that se can use itmes only from dict with available items
+    #     if item == "Полезный пельмень":
+    #         logger.info("Eating pielmienies, nyam nyam.")
+    #         item_el_addr = '//*[@id="inventory-stat_stimulator-btn"]'
+    #     else:
+    #         logger.error(f"Item '{item}' is not supported.")
+    #         return None
 
-        # Use items
-        used_times = 0
-        for _ in tqdm(range(times), desc=f"Using '{item}'"):
-            try:
-                item_el.click()
-                used_times += 1
-                random_delay(2, 3)
-            except Exception as e:
-                logger.error("Something went wrong while using the item, stopping.")
-                logger.error(e)
-                return None
+    #     # Try to find item on page
+    #     try:
+    #         item_el = self.driver.find_element(By.XPATH, item_el_addr)
+    #     except NoSuchElementException:
+    #         logger.error(f"Item '{item}' is not available.")
+    #         return None
 
-        logger.info(f"Used '{item}' for {used_times} times.")
-        return None
+    #     # Stop function if there are less items available than we want to use
+    #     count_el = item_el.find_element(By.XPATH, "../*[@class='count']")
+    #     count = int(count_el.text.replace("#", ""))
+    #     if count < times:
+    #         logger.error(f"Not enough '{item}' to use {times} times. There are only {count} available.")
+    #         return None
+
+    #     # Use items
+    #     used_times = 0
+    #     for _ in tqdm(range(times), desc=f"Using '{item}'"):
+    #         try:
+    #             item_el.click()
+    #             used_times += 1
+    #             random_delay(2, 3)
+    #         except Exception as e:
+    #             logger.error("Something went wrong while using the item, stopping.")
+    #             logger.error(e)
+    #             return None
+
+    #     logger.info(f"Used '{item}' for {used_times} times.")
+    #     return None

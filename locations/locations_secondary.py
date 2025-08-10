@@ -9,6 +9,7 @@ from selenium.webdriver.support.ui import Select
 
 from entities.player import Player
 from utils.custom_logging import logger
+from utils.general import require_location_page
 from utils.human_simulation import random_delay
 
 
@@ -59,6 +60,7 @@ class Shaurburgers:
             self.driver.refresh()
             random_delay()
 
+    @require_location_page
     def is_work_active(self) -> bool:
         """
         Return True if the player is currently working, else False.
@@ -71,6 +73,7 @@ class Shaurburgers:
             self.player.on_work = False
             return False
 
+    @require_location_page
     def get_work_time_left(self) -> int:
         """
         Get the remaining work time in hours.
@@ -88,6 +91,7 @@ class Shaurburgers:
         self.player.work_time_left = time_left
         return time_left
 
+    @require_location_page
     def start_work_shift(self, work_hours: int) -> None:
         """
         Start a work shift for the specified duration.
