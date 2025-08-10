@@ -161,6 +161,11 @@ class Casino:
     """
 
     BASE_URL = "https://www.moswar.ru/casino/"
+    LOCATORS: dict[str, tuple[str, str]] = {
+        "buy_chips_input": (By.XPATH, '//input[@id="stash-change-ore"]'),
+        "buy_chips_confirm": (By.XPATH, '//button[@id="button-change-ore"]'),
+        "buy_chips_error": (By.XPATH, "//*[contains(text(), 'Антиазартный комитет запрещает')]"),
+    }
 
     def __init__(self, player: Player, driver: WebDriver):
         """
@@ -173,11 +178,17 @@ class Casino:
         self.player = player
         self.driver = driver
 
+    def is_opened(self) -> bool:
+        """
+        Check if the driver is currently on the Casino page.
+        """
+        return self.driver.current_url == self.BASE_URL
+
     def open(self) -> None:
         """
-        This method ensures the driver is on the casino page by navigating to its URL.
+        Ensure the driver is on the casino page, navigating or refreshing as needed.
         """
-        if self.driver.current_url != self.BASE_URL:
+        if not self.is_opened():
             logger.info("Driver is not on the casino page. Going to the casino.")
             self.driver.get(self.BASE_URL)
             random_delay()
@@ -189,16 +200,19 @@ class Casino:
     # TODO: change the number of chips in player attribute
     def buy_chips(self, amount: int) -> None:
         """
-        TBA
+        Buy chips in the casino.
+
+        Parameters:
+            amount (int): Number of chips to buy (1-20).
         """
         logger.info(f"Buying {amount} chips.")
         self.open()
 
         if not (1 <= amount <= 20):
-            raise ValueError("Chips must be between 1 and 20.")
+            logger.error("Chips must be between 1 and 20.")
+            return None
 
-        # Buy chips
-        buy_amt_el = self.driver.find_element(By.XPATH, '//input[@id="stash-change-ore"]')
+        buy_amt_el = self.driver.find_element(*self.LOCATORS["buy_chips_input"])
         buy_amt_el.click()
         random_delay()
         buy_amt_el.send_keys(Keys.BACKSPACE)
@@ -206,13 +220,13 @@ class Casino:
         buy_amt_el.send_keys(str(amount))
         random_delay()
 
-        buy_confirm_el = self.driver.find_element(By.XPATH, '//button[@id="button-change-ore"]')
+        buy_confirm_el = self.driver.find_element(*self.LOCATORS["buy_chips_confirm"])
         buy_confirm_el.click()
         random_delay()
 
         # Confirm bought chips
         try:
-            self.driver.find_element(By.XPATH, "//*[contains(text(), 'Антиазартный комитет запрещает')]")
+            self.driver.find_element(*self.LOCATORS["buy_chips_error"])
             logger.error(f"Can't buy {amount} chips, player is not allowed to buy.")
         except NoSuchElementException:
             logger.info(f"Successfully bought {amount} chips.")
