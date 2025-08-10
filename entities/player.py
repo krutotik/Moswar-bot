@@ -31,6 +31,11 @@ class Player:
         "experience": (By.XPATH, "//div[@class='exp']"),
         # Major status
         "major_status": (By.XPATH, "//p[contains(text(), 'Ваш статус мажора закончится')]"),
+        # Waiting for battle
+        "waiting_for_battle": (
+            By.XPATH,
+            "//*[span[@class='text' and text()='Ожидание боя'] and span[@class='timeleft']]",
+        ),
         # Player basic resources
         "money": (By.XPATH, "//li[@class='tugriki-block']"),
         "ore": (By.XPATH, "//li[@class='ruda-block']"),
@@ -133,6 +138,7 @@ class Player:
         self.on_TV = False
         self.in_battle = False
         self.in_underground = False
+        self.awaits_battle = False
 
         # Player time left to do activities
         self.patrol_time_left = 0
@@ -355,6 +361,22 @@ class Player:
             self.in_battle = False
             return False
 
+    def is_waiting_for_battle(self, is_refresh: bool = False) -> bool:
+        """
+        Return True if the player is currently waiting for a battle, else False.
+        """
+        if is_refresh:
+            self.driver.refresh()
+            random_delay()
+
+        try:
+            self.driver.find_element(*self.LOCATORS["waiting_for_battle"])
+            self.awaits_battle = True
+            return True
+        except NoSuchElementException:
+            self.awaits_battle = False
+            return False
+
     def is_in_underground(self, is_refresh: bool = False) -> bool:
         """
         Return True if the player is currently in underground, else False.
@@ -375,6 +397,7 @@ class Player:
         Updates player blocking activities statuses.
         """
         self.is_in_battle(is_refresh)
+        self.is_waiting_for_battle(is_refresh=False)
         self.is_in_underground(is_refresh=False)
 
     def update_actvities_status_non_blocking(self) -> None:
@@ -428,6 +451,7 @@ class Player:
             "Текущие активности игрока:",
             f"В бою: {'Да' if self.in_battle else 'Нет'}",
             f"В подземке: {'Да' if self.in_underground else 'Нет'}",
+            f"Ожидает боя: {'Да' if self.awaits_battle else 'Нет'}",
             f"Патрулирует: {'Да' if self.on_patrol else 'Нет'}",
             f"Работает: {'Да' if self.on_work else 'Нет'}",
             f"Смотрит Патриот-ТВ: {'Да' if self.on_TV else 'Нет'}",
