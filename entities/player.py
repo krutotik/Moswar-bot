@@ -46,7 +46,7 @@ class Player:
         "powers": (By.XPATH, "//span[@class='power counter']"),
         "patriotisms": (By.XPATH, "//span[@class='patriotism_points']"),
         "debts": (By.XPATH, "//span[@class='debt_points']"),
-        # Player inventory resources
+        # Player inventory resources TODO: update to allow using those items too, not only for counting
         "pielmienies": (
             By.XPATH,
             '//*[@id="inventory-stat_stimulator-btn"]/parent::div//div[@class="count"]',
@@ -133,7 +133,6 @@ class Player:
         self.on_TV = False
         self.in_battle = False
         self.in_underground = False
-        self.current_blocking_activity = None  # TODO: add enum for this?
 
         # Player time left to do activities
         self.patrol_time_left = 0
@@ -356,10 +355,6 @@ class Player:
             self.in_battle = False
             return False
 
-        # TODO: Finish later, better to use separate function
-        # if not self.in_battle and self.current_blocking_activity == "battle":
-        #     self.current_blocking_activity = None
-
     def is_in_underground(self, is_refresh: bool = False) -> bool:
         """
         Return True if the player is currently in underground, else False.
@@ -374,10 +369,6 @@ class Player:
         else:
             self.in_underground = False
             return False
-
-        # TODO: Finish later, better to use separate function
-        # if not self.in_underground and self.current_blocking_activity == "underground":
-        #     self.current_blocking_activity = None
 
     def update_actvities_status_blocking(self, is_refresh: bool = True) -> None:
         """
@@ -545,7 +536,7 @@ class Player:
             elif restore_by == RestoreEnergyType.ORE:
                 self.ore -= 1
 
-    # TODO: add minus in recources when using this
+    # TODO: refactor function + add minus in recources when using this
     def use_item(self, item: str, times: int) -> None:
         """
         Uses a specified item from the inventory a given number of times.
