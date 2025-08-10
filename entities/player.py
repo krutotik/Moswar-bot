@@ -51,13 +51,14 @@ class Player:
         "powers": (By.XPATH, "//span[@class='power counter']"),
         "patriotisms": (By.XPATH, "//span[@class='patriotism_points']"),
         "debts": (By.XPATH, "//span[@class='debt_points']"),
-        # Player inventory resources TODO: update to allow using those items too, not only for counting
-        "pielmienies": (
-            By.XPATH,
-            '//*[@id="inventory-stat_stimulator-btn"]/parent::div//div[@class="count"]',
-        ),
-        "tonuses": (By.XPATH, '//*[@id="inventory-restoretonus-btn"]/parent::div//div[@class="count"]'),
-        "snickers": (By.XPATH, '//*[@id="inventory-snikers-btn"]/parent::div//div[@class="count"]'),
+        # Player inventory resources
+        "pielmienies": (By.XPATH, "//img[@src='/@/images/obj/drugs89.png']"),
+        "tonuses": (By.XPATH, "//img[@src='/@/images/obj/drugs147.png']"),
+        "snickers": (By.XPATH, "//img[@src='/@/images/obj/jobs/item6.png']"),
+        "irons": (By.XPATH, "//img[@src='/@/images/obj/item15.png']"),
+        "travel_shuffles": (By.XPATH, "//img[@src='/@/images/obj/travel/shuffle.png']"),
+        "travel_passes": (By.XPATH, "//img[@src='/@/images/obj/travel/pass.png']"),
+        "moskowpoly_dices": (By.XPATH, "//img[@src='/@/images/obj/gifts2017/moscowpoly/dice1.png']"),
         # Health restoration
         "restore_health_button": (
             By.XPATH,
@@ -129,6 +130,7 @@ class Player:
         self.pielmienies = 0
         self.tonuses = 0
         self.snickers = 0
+        self.irons = 0
 
         # Player statuses
         self.is_major = False
@@ -308,17 +310,27 @@ class Player:
             except Exception:
                 logger.error(f"Advanced recourse '{recourse}' not found on the page, it will not be updated.")
 
-    # TODO: travel_passes, moskowpoly_dices, irons
     def update_recourses_inventory(self) -> None:
         """
         Updates player's resources which can be found only in the inventory.
         """
         logger.info("Updating player inventory recourses info.")
 
-        inventory_recourses = ["pielmienies", "tonuses", "snickers"]
+        inventory_recourses = [
+            "pielmienies",
+            "tonuses",
+            "snickers",
+            "irons",
+            "travel_shuffles",
+            "travel_passes",
+            "moskowpoly_dices",
+        ]
         for recourse in inventory_recourses:
             try:
-                value = int(self.driver.find_element(*self.LOCATORS[recourse]).text.replace("#", ""))
+                base_xpath = self.LOCATORS[recourse][1]
+                xpath = f"{base_xpath}/parent::div//div[@class='count']"
+
+                value = int(self.driver.find_element(By.XPATH, xpath).text.replace("#", ""))
                 setattr(self, recourse, value)
             except NoSuchElementException:
                 logger.error(
@@ -476,10 +488,11 @@ class Player:
                 f"Долги: {self.debts:,}",
                 f"Фишки в казино: {self.casino_chips:,}",
                 "",
-                "Текущие ресурсы игрока  из инвенторя:",
+                "Текущие ресурсы игрока из инвенторя:",
                 f"Пельмени: {self.pielmienies:,}",
                 f"Тонусы: {self.tonuses:,}",
                 f"Сникерсы: {self.snickers:,}",
+                f"Утюги: {self.irons:,}",
                 f"(Кругосветка) Смена босса: {self.travel_shuffles:,}",
                 f"(Кругосветка) Праймари пассы: {self.travel_passes:,}",
                 f"Кубики Москвополии: {self.moskowpoly_dices:,}",
