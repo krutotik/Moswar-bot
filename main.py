@@ -18,7 +18,7 @@ from entities.player import Player
 # from general_functions import go_on_activities
 from locations.alley import Alley
 from locations.home import Home
-from locations.locations_secondary import Shaurburgers
+from locations.locations_secondary import Casino, Shaurburgers
 from locations.metro import Metro
 from schemas.alley import EnemySearchType, ResetTimerType
 from schemas.player import RestoreEnergyType
@@ -90,6 +90,8 @@ driver.find_element(By.XPATH, '//div[text()="Патрулировать — "]')
 
 # Casino test
 casino = Casino(player, driver)
+
+casino.open()
 casino.buy_chips(20)
 
 # Police test

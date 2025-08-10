@@ -1,11 +1,19 @@
-OVERALL PROGRESS:
+# TODO
 
+## Alley
+- several checks
+- several fixes 
+- one feature (prot)
+- add check if can patrol this place? 
+- add combined function for full fight
 
-Other codes - to be updated
+## Player
+- finish use item function
+- adress todos on page
 
-Alley - several fixes + one feature + check if can patrol this place? + add combined function for full fight
-Shaurburgers - DONE
+## Casino
+- add check chips amount
 
+# DONE
+- Shaurburgers 
 
-SPECIFIC IDEAS:
-add check if on page method for each class?

@@ -149,7 +149,6 @@ class Shaurburgers:
             logger.error("Failed to start work shift")
 
 
-# TODO: add as player attribute the number of chips the user has
 class Casino:
     """
     Represents the 'Casino' in the game and provides methods for interacting with it.
@@ -197,7 +196,14 @@ class Casino:
             self.driver.refresh()
             random_delay()
 
-    # TODO: change the number of chips in player attribute
+    @require_location_page
+    def get_player_chips_amount(self) -> int:
+        """
+        TBA
+        """
+        pass
+
+    @require_location_page
     def buy_chips(self, amount: int) -> None:
         """
         Buy chips in the casino.
@@ -206,12 +212,12 @@ class Casino:
             amount (int): Number of chips to buy (1-20).
         """
         logger.info(f"Buying {amount} chips.")
-        self.open()
 
         if not (1 <= amount <= 20):
-            logger.error("Chips must be between 1 and 20.")
+            logger.error("The number of chips must be between 1 and 20.")
             return None
 
+        # Buy
         buy_amt_el = self.driver.find_element(*self.LOCATORS["buy_chips_input"])
         buy_amt_el.click()
         random_delay()
@@ -220,15 +226,15 @@ class Casino:
         buy_amt_el.send_keys(str(amount))
         random_delay()
 
-        buy_confirm_el = self.driver.find_element(*self.LOCATORS["buy_chips_confirm"])
-        buy_confirm_el.click()
+        self.driver.find_element(*self.LOCATORS["buy_chips_confirm"]).click()
         random_delay()
 
-        # Confirm bought chips
+        # Check
         try:
             self.driver.find_element(*self.LOCATORS["buy_chips_error"])
             logger.error(f"Can't buy {amount} chips, player is not allowed to buy.")
         except NoSuchElementException:
+            self.player.casino_chips += amount
             logger.info(f"Successfully bought {amount} chips.")
 
 
