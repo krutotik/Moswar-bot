@@ -78,6 +78,9 @@ class Shaurburgers:
         try:
             select_work_hours_el_el = self.driver.find_element(*self.LOCATORS["work_select_hours"])
             time_left = int(select_work_hours_el_el.text.split("\n")[-1].split(" ")[0])
+        except NoSuchElementException:
+            logger.error("Can't get work time left, work select hours element not found.")
+            time_left = -9999
         except Exception:
             time_left = 0
 
