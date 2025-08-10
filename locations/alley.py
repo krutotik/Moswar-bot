@@ -62,7 +62,7 @@ class Alley:
         "patrol_time_left": (By.XPATH, '//form[@class="patrol" and @id="patrolForm"]//p[@class="timeleft"]'),
         # Caravan
         "caravan_available": (By.XPATH, "//a[@href='/desert/']"),
-        "caravan_rob": (By.XPATH, "//a[contains(@href, '/desert/rob/')]"),
+        "caravan_rob": (By.XPATH, '//*[contains(text(), "Грабить караваны!")]'),
         "caravan_result": (By.CLASS_NAME, "text"),
         # Patriot TV
         "TV_select_hours": (By.XPATH, '//*[@id="patriottvForm"]/div/select'),
