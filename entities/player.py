@@ -327,9 +327,7 @@ class Player:
         ]
         for recourse in inventory_recourses:
             try:
-                base_xpath = self.LOCATORS[recourse][1]
-                xpath = f"{base_xpath}/parent::div//div[@class='count']"
-
+                xpath = self.LOCATORS[recourse][1] + "/parent::div//div[@class='count']"
                 value = int(self.driver.find_element(By.XPATH, xpath).text.replace("#", ""))
                 setattr(self, recourse, value)
             except NoSuchElementException:
