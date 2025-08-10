@@ -9,6 +9,7 @@ from selenium.webdriver.support.ui import Select, WebDriverWait
 from entities.player import Player
 from schemas.alley import EnemySearchType, ResetTimerType
 from utils.custom_logging import logger
+from utils.general import require_location_page
 from utils.human_simulation import random_delay
 
 # TODO:
@@ -104,6 +105,7 @@ class Alley:
     # ------------------------
     # FIGHTING SINGLE ENEMY
     # ------------------------
+    @require_location_page
     def is_rest_active(self) -> bool:
         """
         Return True if the player is currently resting, else False.
@@ -116,6 +118,7 @@ class Alley:
             self.player.on_rest = True
             return True
 
+    @require_location_page
     def reset_rest_timer(self, reset_timer_type: ResetTimerType) -> None:
         """
         Reset the rest timer using energy or snickers, if possible.
@@ -214,6 +217,7 @@ class Alley:
         self.driver.find_element(*self.LOCATORS["enemy_level_find"]).click()
         random_delay()
 
+    @require_location_page
     def start_enemy_search(
         self,
         enemy_search_type: EnemySearchType,
@@ -310,6 +314,7 @@ class Alley:
     # ------------------------
     # PATROL
     # ------------------------
+    @require_location_page
     def is_patrol_active(self) -> bool:
         """
         Return True if the player is currently on patrol, else False.
@@ -323,6 +328,7 @@ class Alley:
             return False
 
     # TODO: check if correct when no time left
+    @require_location_page
     def get_patrol_time_left(self) -> int:
         """
         Get the remaining patrol time in minutes.
@@ -336,6 +342,7 @@ class Alley:
         self.player.patrol_time_left = time_left
         return time_left
 
+    @require_location_page
     def start_patrol(self, patrol_minutes: Literal[20, 40] = 20) -> None:
         """
         Start a patrol for the specified duration.
@@ -389,6 +396,7 @@ class Alley:
     # ------------------------
     # CARAVAN
     # ------------------------
+    @require_location_page
     def is_caravan_available(self) -> bool:
         """
         Return True if a caravan is available to rob, else False.
@@ -399,6 +407,7 @@ class Alley:
         except NoSuchElementException:
             return False
 
+    @require_location_page
     def rob_caravan(self) -> None:
         """
         Attempt to rob the caravan if available.
@@ -442,6 +451,7 @@ class Alley:
     # ------------------------
     # PATRIOT TV
     # ------------------------
+    @require_location_page
     def is_TV_active(self) -> bool:
         """
         Return True if the player is currently watching Patriot TV, else False.
@@ -454,6 +464,7 @@ class Alley:
             self.player.on_TV = False
             return False
 
+    @require_location_page
     def get_TV_time_left(self) -> int:
         """
         Get the remaining Patriot TV watching time in minutes.
@@ -467,6 +478,7 @@ class Alley:
         self.player.TV_time_left = time_left
         return time_left
 
+    @require_location_page
     def start_watching_TV(self, watch_hours: Literal[1] = 1) -> None:
         """
         Start a Patriot TV session for 1 hour if possible.
