@@ -146,29 +146,8 @@ class Player:
         self.TV_time_left = 0
 
         # Update player status
-        self.open()
-        self.update_actvities_status_blocking(is_refresh=False)
-
-        if not update_info_on_init:
-            logger.warning("Player successfully initialized, however player info was not updated.")
-        elif self.in_battle:
-            logger.warning(
-                "Player successfully initialized, however information about player status was not updated. Player is in battle."
-            )
-        elif self.in_underground:
-            logger.warning(
-                "Player successfully initialized, however information about player status was not updated. Player is in underground."
-            )
-        else:
-            self.update_health_and_energy(is_refresh=False)
-            self.update_recourses_basic()
-            self.update_stats()
-            self.update_recourses_inventory()
-            self.update_recourses_advanced()
-            self.update_major_status()
-            self.update_actvities_status_non_blocking()
-
-            logger.info("Player successfully initialized.")
+        self.update_player_info() if update_info_on_init else None
+        logger.info("Player successfully initialized.")
 
     def __setattr__(self, name: str, value: float):
         # HP prc auto update
@@ -425,6 +404,26 @@ class Player:
         work.open()
         self.on_work = work.is_work_active()
         self.work_time_left = work.get_work_time_left()
+
+    def update_player_info(self) -> None:
+        """
+        Updates all player information, including health, energy, stats, resources, and activities.
+        """
+        logger.info("Updating all player information.")
+        self.update_actvities_status_blocking(is_refresh=True)
+
+        if self.in_battle or self.in_underground:
+            logger.error("Cannot update player info while in battle or underground.")
+            return None
+
+        self.open()
+        self.update_health_and_energy(is_refresh=False)
+        self.update_stats()
+        self.update_recourses_inventory()
+        self.update_recourses_basic()
+        self.update_recourses_advanced()
+        self.update_major_status()
+        self.update_actvities_status_non_blocking()
 
     def show_info(self, show_all: bool = False) -> None:
         """
