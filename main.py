@@ -45,15 +45,12 @@ player.update_recourses_advanced()
 player.update_recourses_inventory()
 player.update_actvities_status_blocking()
 player.update_actvities_status_non_blocking()
-player.show_info(show_all=True)
+player.show_player_info(show_all=True)
 player.restore_health()
 player.restore_energy(restore_by=RestoreEnergyType.TONUS)
 player.restore_energy(restore_by=RestoreEnergyType.ORE)
 
 # player.use_item("Полезный пельмень", 140)
-driver.find_element(
-    By.XPATH, '//div[@class="c" and .//span[@class="ruda" and normalize-space(text())="10"]]'
-).click()
 
 # Alley test
 alley = Alley(player, driver)
@@ -89,6 +86,7 @@ shaurburgers.is_work_active()
 shaurburgers.get_work_time_left()
 shaurburgers.start_work_shift(2)
 
+driver.find_element(By.XPATH, '//div[text()="Патрулировать — "]').text
 
 # Casino test
 casino = Casino(player, driver)

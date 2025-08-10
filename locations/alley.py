@@ -56,7 +56,7 @@ class Alley:
         "enemy_find_another": (By.XPATH, '//a[contains(@href, "/alley/search/again/")]'),
         "enemy_attack": (By.XPATH, "//div[@class='button button-fight']"),
         # Patrol
-        "patrol_start_button": (By.XPATH, '//button[@id="alley-patrol-button" and @class="button"]'),
+        "patrol_start_button": (By.XPATH, '//div[text()="Патрулировать — "]'),
         "patrol_select_minutes": (By.XPATH, '//*[@id="patrolForm"]/div[2]/select'),
         "patrol_active": (By.XPATH, "//td[@class='label' and text()='Патрулирование:']"),
         "patrol_time_left": (By.XPATH, '//form[@class="patrol" and @id="patrolForm"]//p[@class="timeleft"]'),
@@ -66,7 +66,7 @@ class Alley:
         "caravan_result": (By.CLASS_NAME, "text"),
         # Patriot TV
         "TV_select_hours": (By.XPATH, '//*[@id="patriottvForm"]/div/select'),
-        "TV_start_button": (By.XPATH, '//*[@id="alley-patriot-button"]'),
+        "TV_start_button": (By.XPATH, '//div[text()="Смотреть ТВ"]'),
         "TV_active": (By.XPATH, "//td[@class='label' and text()='Просмотр:']"),
         "TV_time_left": (By.XPATH, '//form[@class="patrol" and @id="patriottvForm"]//p[@class="timeleft"]'),
     }
@@ -389,7 +389,6 @@ class Alley:
     # ------------------------
     # CARAVAN
     # ------------------------
-    # TODO: test caravan functions
     def is_caravan_available(self) -> bool:
         """
         Return True if a caravan is available to rob, else False.
@@ -455,7 +454,6 @@ class Alley:
             self.player.on_TV = False
             return False
 
-    # TODO: check if correct
     def get_TV_time_left(self) -> int:
         """
         Get the remaining Patriot TV watching time in minutes.
@@ -469,7 +467,6 @@ class Alley:
         self.player.TV_time_left = time_left
         return time_left
 
-    # TODO: check if correct
     def start_watching_TV(self, watch_hours: Literal[1] = 1) -> None:
         """
         Start a Patriot TV session for 1 hour if possible.
