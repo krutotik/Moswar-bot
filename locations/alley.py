@@ -179,7 +179,7 @@ class Alley:
             - Sets the min and max level fields.
             - Initiates the search for an enemy within the specified level range.
         """
-        if not self.player.is_major:
+        if not self.player.major_is_active:
             logger.error("Player is not a major, can't fight enemies by level.")
             return None
 
