@@ -114,10 +114,11 @@ driver.find_element(By.XPATH, "//*[contains(text(), 'В наличии')]//span[
 # Factory test
 factory = Factory(player, driver)
 factory.open(FactoryPage.BASE)
-factory.open(FactoryPage.BRONEVIK)
 factory.get_current_petrics_amount()
 factory.get_petrics_amount_to_be_produced()
-# factory.buy_current_details()
+factory.open(FactoryPage.BRONEVIK)
+factory.check_current_details_name()
+factory.buy_current_details()
 
 # Home test
 home = Home(player, driver)

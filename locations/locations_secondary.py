@@ -430,9 +430,9 @@ class Factory:
         "petrics_produce_timer": (By.XPATH, "TBA"),
         "petrics_produce_no_timer": (By.XPATH, '//div[contains(text(), "Сделать моментально")]'),
         "petrics_in_production": (By.XPATH, "TBA"),
-        "open_bronevik": (By.XPATH, "//a[@href='/factory/build/bronevik/']"),
-        "factory_details_img": (By.XPATH, "//div[@class='exchange']//div[@class='get']//img"),
-        "buy_details_btn": (By.XPATH, "//button[@id='factory-build-exchange']"),
+        "bronevik_open": (By.XPATH, "//a[@href='/factory/build/bronevik/']"),
+        "bronevik_details_img": (By.XPATH, "//div[@class='exchange']//div[@class='get']//img"),
+        "bronevik_details_buy": (By.XPATH, "//button[@id='factory-build-exchange']"),
     }
 
     def __init__(self, player: Player, driver: WebDriver):
@@ -464,7 +464,7 @@ class Factory:
 
         if page == FactoryPage.BRONEVIK and self.is_opened(FactoryPage.BASE):
             logger.info("Driver is on BASE, navigating to BRONEVIK.")
-            self.driver.find_element(*self.LOCATORS["open_bronevik"]).click()
+            self.driver.find_element(*self.LOCATORS["bronevik_open"]).click()
             random_delay()
             return
 
@@ -473,7 +473,7 @@ class Factory:
         random_delay()
 
         if page == FactoryPage.BRONEVIK:
-            self.driver.find_element(*self.LOCATORS["open_bronevik"]).click()
+            self.driver.find_element(*self.LOCATORS["bronevik_open"]).click()
             random_delay()
 
     # ------------------------
@@ -523,36 +523,32 @@ class Factory:
     # ------------------------
     # BRONEVIK
     # ------------------------
+    @require_page_prefix(PAGE_URLS[FactoryPage.BRONEVIK])
+    def check_current_details_name(self) -> str:
+        """
+        Get the name of the current details available for purchase in the factory.
+        """
+        logger.info("Checking current details name.")
 
-    # def check_current_details_name(self) -> Optional[str]:
-    #     """
-    #     Get the name of the current details available for purchase in the factory.
-    #     """
-    #     logger.info("Checking current details name.")
-    #     self.open("bronevik")
-    #     if not self.on_page == "bronevik":
-    #         logger.error("Can't check details name, driver is not on bronevik page.")
-    #         return None
-    #     img_el = self.driver.find_element(*self.LOCATORS["details_img"])
-    #     details_name = img_el.get_attribute("alt")
-    #     logger.info(f"Details name: '{details_name}'")
-    #     return details_name
+        details_name = self.driver.find_element(*self.LOCATORS["bronevik_details_img"]).get_attribute("alt")
+        logger.info(f"Details name: '{details_name}'")
+        return details_name if details_name else "ERROR"
 
-    # def buy_current_details(self) -> None:
-    #     """
-    #     Buy the current details in the factory if available.
-    #     """
-    #     logger.info("Buying current details.")
-    #     self.open("bronevik")
-    #     if not self.on_page == "bronevik":
-    #         logger.error("Can't buy details, driver is not on bronevik page.")
-    #         return None
-    #     buy_details_el = self.driver.find_element(*self.LOCATORS["buy_details_btn"])
-    #     buy_details_el.click()
-    #     random_delay()
+    @require_page_prefix(PAGE_URLS[FactoryPage.BRONEVIK])
+    def buy_current_details(self) -> None:
+        """
+        Buy the current details in the factory if available.
+        """
+        detail_name = self.check_current_details_name()
+        logger.info(f"Buying current details: {detail_name}")
+        self.driver.find_element(*self.LOCATORS["bronevik_details_buy"]).click()
+        random_delay()
+
+        self.player.mobiles -= 3
+        self.player.stars -= 5
 
 
-# add Bojara filtering and status check
+# add Bojara filtering and status check TODO: rework
 class TrainerVip:
     """
     Represents the 'TrainerVip' in the game and provides methods for interacting with it.

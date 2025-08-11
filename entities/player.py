@@ -593,10 +593,6 @@ class Player:
         """
         TBA
         """
-        if not self.is_opened():
-            logger.error("Player page is not opened, cannot use item.")
-            return None
-
         if item not in ["pielmienies", "tonuses", "snickers"]:
             logger.error(f"Item '{item}' is not supported for use.")
             return None
