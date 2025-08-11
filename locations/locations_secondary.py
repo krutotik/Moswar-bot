@@ -416,11 +416,15 @@ class Factory:
     Attributes:
         player: The player object representing the user in the game.
         driver: The Selenium WebDriver instance used for navigating and interacting with web elements.
-        BASE_URL: The base URL for the Metro page.
+        BASE_URL: The base URL for the Factory page.
     """
 
     BASE_URL = "https://www.moswar.ru/factory/"
-    SUBPAGES = {"bronevik"}  # add main and change to pages?
+    SUBPAGES = {"bronevik"}
+    LOCATORS: dict[str, tuple[str, str]] = {
+        "details_img": (By.XPATH, "//div[@class='exchange']//div[@class='get']//img"),
+        "buy_details_btn": (By.XPATH, "//button[@id='factory-build-exchange']"),
+    }
     subpages_buttons_xpath_dict = {
         "bronevik": "//a[@href='/factory/build/bronevik/']",
     }
@@ -437,38 +441,29 @@ class Factory:
         self.driver = driver
         self.on_page: Optional[Literal["main", "bronevik"]] = None
 
+    def is_opened(self) -> bool:
+        """
+        Check if the driver is currently on the Factory page.
+        """
+        return self.driver.current_url.startswith(self.BASE_URL)
+
     def open(self, page: Literal["main", "bronevik"] = "main") -> None:
         """
-        Navigates to the factory page or its subpage.
-
-        Parameters:
-            page (Literal["main", "bronevik"]): The name of the page to open. Defaults to "main".
-
-        Raises:
-            ValueError: If the requested subpage is not supported.
+        Ensure the driver is on the factory page or its subpage, navigating or refreshing as needed.
         """
-
-        # Check if driver is out of factory
-        if not self.driver.current_url.startswith(self.BASE_URL):
+        if not self.is_opened():
             self.on_page = None
-
-        # Check if page is supported
         if page != "main" and page not in self.SUBPAGES:
             raise ValueError(f"Page '{page}' is not supported. Allowed: {', '.join(self.SUBPAGES)}.")
-
-        # Check if page is already open
         if self.on_page == page:
             logger.info(f"Driver is already on the '{page}' page, refreshing.")
             self.driver.refresh()
             random_delay()
             return
-
-        # Navigate to the requested page
         logger.info(f"Opening '{page}' page.")
         self.driver.get(self.BASE_URL)
         random_delay()
         self.on_page = "main"
-
         if page != "main":
             logger.info(f"Navigating to the '{page}' subpage.")
             xpath = self.subpages_buttons_xpath_dict.get(page)
@@ -484,34 +479,28 @@ class Factory:
 
     def check_current_details_name(self) -> Optional[str]:
         """
-        TBA
+        Get the name of the current details available for purchase in the factory.
         """
         logger.info("Checking current details name.")
         self.open("bronevik")
-
         if not self.on_page == "bronevik":
             logger.error("Can't check details name, driver is not on bronevik page.")
             return None
-
-        # Get details name
-        img_el = self.driver.find_element(By.XPATH, "//div[@class='exchange']//div[@class='get']//img")
+        img_el = self.driver.find_element(*self.LOCATORS["details_img"])
         details_name = img_el.get_attribute("alt")
         logger.info(f"Details name: '{details_name}'")
         return details_name
 
     def buy_current_details(self) -> None:
         """
-        TBA
+        Buy the current details in the factory if available.
         """
         logger.info("Buying current details.")
         self.open("bronevik")
-
         if not self.on_page == "bronevik":
             logger.error("Can't buy details, driver is not on bronevik page.")
             return None
-
-        # Buy details
-        buy_details_el = self.driver.find_element(By.XPATH, '//button[@id="factory-build-exchange"]')
+        buy_details_el = self.driver.find_element(*self.LOCATORS["buy_details_btn"])
         buy_details_el.click()
         random_delay()
 
@@ -582,7 +571,7 @@ class TrainerVip:
 
         # Additionaly check if Bojara filtering is not used
         try:
-            element = self.driver.find_element(
+            _ = self.driver.find_element(
                 By.XPATH,
                 '//div[@class="c" and contains(text(), "Отфильтровать боярышник")]',
             )

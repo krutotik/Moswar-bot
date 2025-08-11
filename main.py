@@ -18,7 +18,7 @@ from entities.player import Player
 # from general_functions import go_on_activities
 from locations.alley import Alley
 from locations.home import Home
-from locations.locations_secondary import Casino, Police, Shaurburgers
+from locations.locations_secondary import Casino, NightClub, Police, Shaurburgers
 from locations.metro import Metro
 from schemas.alley import EnemySearchType, ResetTimerType
 from schemas.player import RestoreEnergyType
@@ -36,6 +36,7 @@ driver = log_in(driver, credentials)
 
 # Player test
 player = Player(driver, update_info_on_init=True)
+player.show_player_info(show_all=True)
 # player.update_health_and_energy()
 # player.update_stats()
 # player.update_major_status()
@@ -45,7 +46,6 @@ player = Player(driver, update_info_on_init=True)
 # player.update_recourses_inventory()
 # player.update_actvities_status_blocking()
 # player.update_actvities_status_non_blocking()
-# player.show_player_info(show_all=True)
 # player.restore_health()
 # player.restore_energy(restore_by=RestoreEnergyType.TONUS)
 # player.restore_energy(restore_by=RestoreEnergyType.ORE)
@@ -95,16 +95,17 @@ casino = Casino(player, driver)
 
 # Police test
 police = Police(player, driver)
-police.open()
+# police.open()
 
-police.are_connections_established()
-police.establish_connections()
+# police.are_connections_established()
+# police.establish_connections()
 
 
 # NightClub test
 nightclub = NightClub(player, driver)
-nightclub.check_tatoo_timer()
-# nightclub.open()
+nightclub.open()
+
+nightclub.is_tattoo_availiable()
 
 # Factory test
 factory = Factory(player, driver)
