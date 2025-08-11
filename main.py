@@ -90,9 +90,11 @@ driver.find_element(By.XPATH, '//div[text()="Патрулировать — "]')
 
 # Casino test
 casino = Casino(player, driver)
-
 casino.open()
+
+casino.get_player_chips_amount()
 casino.buy_chips(20)
+
 
 # Police test
 police = Police(player, driver)

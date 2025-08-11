@@ -327,7 +327,6 @@ class Alley:
             self.player.on_patrol = False
             return False
 
-    # TODO: check if correct when no time left
     @require_location_page
     def get_patrol_time_left(self) -> int:
         """

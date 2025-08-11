@@ -164,6 +164,7 @@ class Casino:
         "buy_chips_input": (By.XPATH, '//input[@id="stash-change-ore"]'),
         "buy_chips_confirm": (By.XPATH, '//button[@id="button-change-ore"]'),
         "buy_chips_error": (By.XPATH, "//*[contains(text(), 'Антиазартный комитет запрещает')]"),
+        "chips_balance": (By.XPATH, "//span[@id='fishki-balance-num']"),
     }
 
     def __init__(self, player: Player, driver: WebDriver):
@@ -199,9 +200,11 @@ class Casino:
     @require_location_page
     def get_player_chips_amount(self) -> int:
         """
-        TBA
+        Get the current number of chips the player has in the casino.
         """
-        pass
+        amount = int(self.driver.find_element(*self.LOCATORS["chips_balance"]).text.replace(",", ""))
+        self.player.casino_chips = amount
+        return amount
 
     @require_location_page
     def buy_chips(self, amount: int) -> None:
