@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import Literal, Optional
 
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -8,6 +7,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 
 from entities.player import Player
+from schemas.locations_secondary import FactoryPage
 from utils.custom_logging import logger
 from utils.general import require_location_page
 from utils.human_simulation import random_delay
@@ -407,8 +407,6 @@ class NightClub:
         pass
 
 
-# TODO: add docstrings, add check which details and how many are required
-# TODO: open page and open bronevik page should be in the same function (see home for reference)
 class Factory:
     """
     Represents the 'Factory' in the game and provides methods for interacting with it.
@@ -419,14 +417,16 @@ class Factory:
         BASE_URL: The base URL for the Factory page.
     """
 
-    BASE_URL = "https://www.moswar.ru/factory/"
-    SUBPAGES = {"bronevik"}
-    LOCATORS: dict[str, tuple[str, str]] = {
-        "details_img": (By.XPATH, "//div[@class='exchange']//div[@class='get']//img"),
-        "buy_details_btn": (By.XPATH, "//button[@id='factory-build-exchange']"),
+    PAGE_URLS = {
+        FactoryPage.BASE: "https://www.moswar.ru/factory/",
+        FactoryPage.BRONEVIK: "https://www.moswar.ru/factory/build/bronevik/",
     }
-    subpages_buttons_xpath_dict = {
-        "bronevik": "//a[@href='/factory/build/bronevik/']",
+
+    LOCATORS: dict[str, tuple[str, str]] = {
+        "produce_petrics": (By.XPATH, "TBA"),
+        "open_bronevik": (By.XPATH, "//a[@href='/factory/build/bronevik/']"),
+        "factory_details_img": (By.XPATH, "//div[@class='exchange']//div[@class='get']//img"),
+        "buy_details_btn": (By.XPATH, "//button[@id='factory-build-exchange']"),
     }
 
     def __init__(self, player: Player, driver: WebDriver):
@@ -439,70 +439,63 @@ class Factory:
         """
         self.player = player
         self.driver = driver
-        self.on_page: Optional[Literal["main", "bronevik"]] = None
 
-    def is_opened(self) -> bool:
+    def is_opened(self, page: FactoryPage = FactoryPage.BASE) -> bool:
         """
-        Check if the driver is currently on the Factory page.
+        Check if the driver is currently on the specified Factory page (BASE or BRONEVIK).
         """
-        return self.driver.current_url.startswith(self.BASE_URL)
+        return self.driver.current_url == self.PAGE_URLS[page]
 
-    def open(self, page: Literal["main", "bronevik"] = "main") -> None:
+    def open(self, page: FactoryPage = FactoryPage.BASE) -> None:
         """
-        Ensure the driver is on the factory page or its subpage, navigating or refreshing as needed.
+        Ensure the driver is on the requested Factory page (BASE or BRONEVIK).
         """
-        if not self.is_opened():
-            self.on_page = None
-        if page != "main" and page not in self.SUBPAGES:
-            raise ValueError(f"Page '{page}' is not supported. Allowed: {', '.join(self.SUBPAGES)}.")
-        if self.on_page == page:
-            logger.info(f"Driver is already on the '{page}' page, refreshing.")
+        if self.is_opened(page):
+            logger.info(f"Driver is already on the {page} page, refreshing.")
             self.driver.refresh()
             random_delay()
             return
-        logger.info(f"Opening '{page}' page.")
-        self.driver.get(self.BASE_URL)
-        random_delay()
-        self.on_page = "main"
-        if page != "main":
-            logger.info(f"Navigating to the '{page}' subpage.")
-            xpath = self.subpages_buttons_xpath_dict.get(page)
-            try:
-                subpage_el = self.driver.find_element(By.XPATH, xpath)
-                subpage_el.click()
-                random_delay()
-                self.on_page = page
-            except NoSuchElementException:
-                logger.error(f"Subpage '{page}' button not found. XPath: {xpath}")
-            except Exception as e:
-                logger.error(f"Failed to open subpage '{page}': {e}")
 
-    def check_current_details_name(self) -> Optional[str]:
-        """
-        Get the name of the current details available for purchase in the factory.
-        """
-        logger.info("Checking current details name.")
-        self.open("bronevik")
-        if not self.on_page == "bronevik":
-            logger.error("Can't check details name, driver is not on bronevik page.")
-            return None
-        img_el = self.driver.find_element(*self.LOCATORS["details_img"])
-        details_name = img_el.get_attribute("alt")
-        logger.info(f"Details name: '{details_name}'")
-        return details_name
+        if page == FactoryPage.BRONEVIK and self.is_opened(FactoryPage.BASE):
+            logger.info("Driver is on BASE, navigating to BRONEVIK.")
+            self.driver.find_element(*self.LOCATORS["open_bronevik"]).click()
+            random_delay()
+            return
 
-    def buy_current_details(self) -> None:
-        """
-        Buy the current details in the factory if available.
-        """
-        logger.info("Buying current details.")
-        self.open("bronevik")
-        if not self.on_page == "bronevik":
-            logger.error("Can't buy details, driver is not on bronevik page.")
-            return None
-        buy_details_el = self.driver.find_element(*self.LOCATORS["buy_details_btn"])
-        buy_details_el.click()
+        logger.info(f"Driver is not on the {page} page. Going to BASE first.")
+        self.driver.get(self.PAGE_URLS[FactoryPage.BASE])
         random_delay()
+
+        if page == FactoryPage.BRONEVIK:
+            self.driver.find_element(*self.LOCATORS["open_bronevik"]).click()
+            random_delay()
+
+    # def check_current_details_name(self) -> Optional[str]:
+    #     """
+    #     Get the name of the current details available for purchase in the factory.
+    #     """
+    #     logger.info("Checking current details name.")
+    #     self.open("bronevik")
+    #     if not self.on_page == "bronevik":
+    #         logger.error("Can't check details name, driver is not on bronevik page.")
+    #         return None
+    #     img_el = self.driver.find_element(*self.LOCATORS["details_img"])
+    #     details_name = img_el.get_attribute("alt")
+    #     logger.info(f"Details name: '{details_name}'")
+    #     return details_name
+
+    # def buy_current_details(self) -> None:
+    #     """
+    #     Buy the current details in the factory if available.
+    #     """
+    #     logger.info("Buying current details.")
+    #     self.open("bronevik")
+    #     if not self.on_page == "bronevik":
+    #         logger.error("Can't buy details, driver is not on bronevik page.")
+    #         return None
+    #     buy_details_el = self.driver.find_element(*self.LOCATORS["buy_details_btn"])
+    #     buy_details_el.click()
+    #     random_delay()
 
 
 # add Bojara filtering and status check

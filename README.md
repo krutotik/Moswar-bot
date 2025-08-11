@@ -18,6 +18,8 @@
 - adress todos on page
 - update chips count on startup
 - update police info on startup. change to False by default 
+- add petrics + update
+- add injectors
 
 ## Casino
 
