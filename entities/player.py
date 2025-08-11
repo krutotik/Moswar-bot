@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from selenium.common.exceptions import NoSuchElementException
@@ -145,11 +146,11 @@ class Player:
 
         # Player statuses (time dependent) TODO: add expiration date checks
         self.major_is_active = False
-        self.major_expiration_date = None
+        self.major_expiration_date: datetime | None = None
         self.police_is_active = True
-        self.police_expiration_date = None
+        self.police_expiration_date: datetime | None = None
         self.tattoo_is_available = False
-        self.tattoo_availability_date = None
+        self.tattoo_availability_date: datetime | None = None
 
         # Player time left to do activities
         self.patrol_time_left = 0

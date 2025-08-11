@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
 from typing import Literal, Optional
 
 from selenium.common.exceptions import NoSuchElementException
@@ -290,16 +290,17 @@ class Police:
             self.driver.refresh()
             random_delay()
 
+    # TODO: also update expiration date
     def are_connections_established(self) -> bool:
         """
         Return True if the player has established police connections, else False.
         """
         try:
             self.driver.find_element(*self.LOCATORS["connections_establish"])
-            self.player.has_police_connections = False
+            self.player.police_is_active = False
             return False
         except NoSuchElementException:
-            self.player.has_police_connections = True
+            self.player.police_is_active = True
             return True
 
     @require_location_page
@@ -317,11 +318,11 @@ class Police:
 
         random_delay(min_time=5, max_time=6)
         if self.are_connections_established():
-            self.player.has_police_connections = True
+            self.player.police_is_active = True
             logger.info("Police connections established successfully.")
         else:
             logger.error("Failed to establish police connections.")
-            self.player.has_police_connections = False
+            self.player.police_is_active = False
 
 
 class NightClub:
@@ -335,6 +336,10 @@ class NightClub:
     """
 
     BASE_URL = "https://www.moswar.ru/nightclub/"
+    LOCATORS: dict[str, tuple[str, str]] = {
+        "tattoo_timer": (By.XPATH, '//p[contains(text(), "До следующей печати")]/span[@class="timer"]'),
+        "tattoo_get": (By.XPATH, "TBA"),
+    }
 
     def __init__(self, player: Player, driver: WebDriver):
         """
@@ -347,11 +352,17 @@ class NightClub:
         self.player = player
         self.driver = driver
 
+    def is_opened(self) -> bool:
+        """
+        Check if the driver is currently on the NightClub page.
+        """
+        return self.driver.current_url == self.BASE_URL
+
     def open(self) -> None:
         """
-        This method ensures the driver is on the nightclub page by navigating to its URL.
+        Ensure the driver is on the nightclub page, navigating or refreshing as needed.
         """
-        if self.driver.current_url != self.BASE_URL:
+        if not self.is_opened():
             logger.info("Driver is not on the nightclub page. Going to the nightclub.")
             self.driver.get(self.BASE_URL)
             random_delay()
@@ -360,39 +371,39 @@ class NightClub:
             self.driver.refresh()
             random_delay()
 
-    def check_tatoo_timer(self) -> float:
+    @require_location_page
+    def is_tattoo_availiable(self) -> bool:
         """
-        TBA
+        Return True if the player can take new tattoos, else False.
         """
         logger.info("Checking tattoo timer.")
-        self.open()
-
-        # Check tattoo timer
         try:
-            time_element = self.driver.find_element(
-                By.XPATH,
-                '//p[contains(text(), "До следующей печати")]/span[@class="timer"]',
-            )
-            time_text = time_element.text
+            time_text = self.driver.find_element(*self.LOCATORS["tattoo_timer"]).text
             time_hours = int(time_text.split(":")[0])
             time_minutes = int(time_text.split(":")[1])
-            logger.info(f"Player can take new tattoos in {time_hours} hours and {time_minutes} minutes.")
+            time_seconds = int(time_text.split(":")[2])
         except NoSuchElementException:
-            time_hours = 0
-            time_minutes = 0
+            time_hours, time_minutes, time_seconds = 0, 0, 0
+
+        time_seconds = timedelta(hours=time_hours, minutes=time_minutes, seconds=time_seconds).total_seconds()
+        if time_seconds == 0:
             logger.info("Player can take new tattoos now.")
+            self.player.tattoo_is_available = True
+            self.player.tattoo_availability_date = datetime.now()
+            return True
+        else:
+            logger.info(f"Player can take new tattoos in {time_hours} hours, {time_minutes} minutes")
+            self.player.tattoo_is_available = False
+            self.player.tattoo_availability_date = datetime.now() + timedelta(seconds=time_seconds)
+            return False
 
-        time_seconds = timedelta(hours=time_hours, minutes=time_minutes).total_seconds()
-        return time_seconds
-
-    # TODO: implement function for getting tattoos when available
+    @require_location_page
     def get_tattoo(self) -> None:
         """
-        TBA
+        Get a tattoo if available (to be implemented).
         """
         logger.info("Getting tattoo.")
-        self.open()
-
+        # Future implementation goes here
         pass
 
 
