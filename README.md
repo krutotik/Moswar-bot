@@ -21,13 +21,23 @@
 - add petrics + update
 - add injectors
 
-## Casino
+## Nightclub
+- get tatoo add
 
+## Factory
+- bronevik
+- petriki finish
 
 ## Police
-- check when to update connections, same for major
+- check when to update connections
 
+## Stash
+- implement
+
+## Home
+- Fully refactor
 
 # DONE
-- Shaurburgers 
+- Shaurburgers
+- Casino 
 

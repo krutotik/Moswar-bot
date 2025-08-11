@@ -128,6 +128,7 @@ class Player:
         self.travel_passes = 0
         self.moskowpoly_dices = 0
         self.casino_chips = 0
+        self.petrics = 0
 
         # Player acitve items
         self.pielmienies = 0
@@ -501,6 +502,7 @@ class Player:
                 f"Патриотизм: {self.patriotisms:,}",
                 f"Долги: {self.debts:,}",
                 f"Фишки в казино: {self.casino_chips:,}",
+                f"Петрики: {self.petrics:,}",
                 "",
                 "Текущие ресурсы игрока из инвенторя:",
                 f"Пельмени: {self.pielmienies:,}",

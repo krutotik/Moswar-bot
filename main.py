@@ -18,9 +18,10 @@ from entities.player import Player
 # from general_functions import go_on_activities
 from locations.alley import Alley
 from locations.home import Home
-from locations.locations_secondary import Casino, NightClub, Police, Shaurburgers
+from locations.locations_secondary import Casino, Factory, NightClub, Police, Shaurburgers
 from locations.metro import Metro
 from schemas.alley import EnemySearchType, ResetTimerType
+from schemas.locations_secondary import FactoryPage
 from schemas.player import RestoreEnergyType
 
 load_dotenv()
@@ -106,10 +107,16 @@ nightclub = NightClub(player, driver)
 nightclub.open()
 
 nightclub.is_tattoo_availiable()
+# nightclub.get_tattoo()
+
+driver.find_element(By.XPATH, "//*[contains(text(), 'В наличии')]//span[@class='petric']").text
 
 # Factory test
 factory = Factory(player, driver)
-factory.check_current_details_name()
+factory.open(FactoryPage.BASE)
+factory.open(FactoryPage.BRONEVIK)
+factory.get_current_petrics_amount()
+factory.get_petrics_amount_to_be_produced()
 # factory.buy_current_details()
 
 # Home test

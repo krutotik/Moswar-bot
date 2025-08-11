@@ -9,7 +9,7 @@ from selenium.webdriver.support.ui import Select
 from entities.player import Player
 from schemas.locations_secondary import FactoryPage
 from utils.custom_logging import logger
-from utils.decorators import require_location_page
+from utils.decorators import require_location_page, require_page_prefix
 from utils.human_simulation import random_delay
 
 
@@ -291,6 +291,7 @@ class Police:
             random_delay()
 
     # TODO: also update expiration date
+    @require_page_prefix("https://www.moswar.ru/police/")
     def are_connections_established(self) -> bool:
         """
         Return True if the player has established police connections, else False.
@@ -397,6 +398,7 @@ class NightClub:
             self.player.tattoo_availability_date = datetime.now() + timedelta(seconds=time_seconds)
             return False
 
+    # TODO: finish when button is available
     @require_location_page
     def get_tattoo(self) -> None:
         """
@@ -423,7 +425,11 @@ class Factory:
     }
 
     LOCATORS: dict[str, tuple[str, str]] = {
-        "produce_petrics": (By.XPATH, "TBA"),
+        "petrics_amt": (By.XPATH, "//*[contains(text(), 'В наличии')]//span[@class='petric']"),
+        "petrics_amt_to_be_produced": (By.XPATH, '//*[@id="factory_petrik_1"]//span[@class="petric"]'),
+        "petrics_produce_timer": (By.XPATH, "TBA"),
+        "petrics_produce_no_timer": (By.XPATH, '//div[contains(text(), "Сделать моментально")]'),
+        "petrics_in_production": (By.XPATH, "TBA"),
         "open_bronevik": (By.XPATH, "//a[@href='/factory/build/bronevik/']"),
         "factory_details_img": (By.XPATH, "//div[@class='exchange']//div[@class='get']//img"),
         "buy_details_btn": (By.XPATH, "//button[@id='factory-build-exchange']"),
@@ -469,6 +475,54 @@ class Factory:
         if page == FactoryPage.BRONEVIK:
             self.driver.find_element(*self.LOCATORS["open_bronevik"]).click()
             random_delay()
+
+    # ------------------------
+    # PETRICS
+    # ------------------------
+    @require_location_page
+    def get_current_petrics_amount(self) -> int:
+        """
+        Get the current amount of 'Петрики' player has.
+        """
+        amount = int(self.driver.find_element(*self.LOCATORS["petrics_amt"]).text.replace(",", ""))
+        self.player.petrics = amount
+        return amount
+
+    @require_location_page
+    def get_petrics_amount_to_be_produced(self) -> int:
+        """
+        Get the amount of 'Петрики' that can be produced in the factory.
+        """
+        amount = int(
+            self.driver.find_element(*self.LOCATORS["petrics_amt_to_be_produced"]).text.replace(",", "")
+        )
+        return amount
+
+    # TODO: finish when status is available
+    @require_location_page
+    def if_producing_petrics(self) -> None:
+        """
+        Return True if the factory is currently producing 'Петрики', else False.
+        """
+        pass
+
+    # TODO: finish
+    @require_location_page
+    def start_producing_petrics(self) -> None:
+        """
+        Start producing 'Петрики' in the factory.
+        """
+        logger.info("Starting to produce 'Петрики'.")
+
+        if self.if_producing_petrics():
+            logger.error("Can't start producing 'Петрики', already producing.")
+            return None
+
+        pass
+
+    # ------------------------
+    # BRONEVIK
+    # ------------------------
 
     # def check_current_details_name(self) -> Optional[str]:
     #     """
