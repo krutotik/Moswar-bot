@@ -9,7 +9,7 @@ from selenium.webdriver.support.ui import Select, WebDriverWait
 from entities.player import Player
 from schemas.alley import EnemySearchType, ResetTimerType
 from utils.custom_logging import logger
-from utils.general import require_location_page
+from utils.decorators import require_location_page
 from utils.human_simulation import random_delay
 
 # TODO:

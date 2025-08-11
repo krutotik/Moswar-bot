@@ -7,7 +7,7 @@ from selenium.webdriver.common.by import By
 
 from schemas.player import RestoreEnergyType
 from utils.custom_logging import logger
-from utils.general import require_location_page
+from utils.decorators import require_location_page
 from utils.human_simulation import random_delay
 
 # TODO: add status of the player, searching< fighting, etc.
