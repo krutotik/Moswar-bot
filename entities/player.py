@@ -135,8 +135,6 @@ class Player:
         self.irons = 0
 
         # Player statuses
-        self.is_major = False
-        self.has_police_connections = True
         self.on_rest = False
         self.on_patrol = False
         self.on_work = False
@@ -144,6 +142,14 @@ class Player:
         self.in_battle = False
         self.in_underground = False
         self.awaits_battle = False
+
+        # Player statuses (time dependent) TODO: add expiration date checks
+        self.major_is_active = False
+        self.major_expiration_date = None
+        self.police_is_active = True
+        self.police_expiration_date = None
+        self.tattoo_is_available = False
+        self.tattoo_availability_date = None
 
         # Player time left to do activities
         self.patrol_time_left = 0
@@ -267,9 +273,9 @@ class Player:
 
         try:
             self.driver.find_element(*self.LOCATORS["major_status"])
-            self.is_major = True
+            self.major_is_active = True
         except NoSuchElementException:
-            self.is_major = False
+            self.major_is_active = False
 
     def update_recourses_basic(self) -> None:
         """
@@ -462,6 +468,11 @@ class Player:
             f"Текущий уровень игрока: {self.level:,}",
             f"Опыта до следующего уровня: {self.experience_needed_to_level - self.experience:,}",
             "",
+            "Текущие статусы игрока:",
+            f"Статус мажора: {'Да' if self.major_is_active else 'Нет'} (Дата окончания: {self.major_expiration_date})",
+            f"Cвязи с полицией: {'Да' if self.police_is_active else 'Нет ()'} (Дата окончания: {self.police_expiration_date})",
+            f"Татуировки доступны: {'Да' if self.tattoo_is_available else 'Нет'} (Дата доступности: {self.tattoo_availability_date})",
+            "",
             "Текущие активности игрока:",
             f"В бою: {'Да' if self.in_battle else 'Нет'}",
             f"В подземке: {'Да' if self.in_underground else 'Нет'}",
@@ -469,8 +480,6 @@ class Player:
             f"Патрулирует: {'Да' if self.on_patrol else 'Нет'}",
             f"Работает: {'Да' if self.on_work else 'Нет'}",
             f"Смотрит Патриот-ТВ: {'Да' if self.on_TV else 'Нет'}",
-            f"Статус мажора: {'Да' if self.is_major else 'Нет'}",
-            f"Cвязи с полицией: {'Да' if self.has_police_connections else 'Нет'}",
             "",
             "Количество оставшегося времени на актиновсти:",
             f"Патрулирование: {self.patrol_time_left} минут",
