@@ -18,7 +18,7 @@ from entities.player import Player
 # from general_functions import go_on_activities
 from locations.alley import Alley
 from locations.home import Home
-from locations.locations_secondary import Casino, Shaurburgers
+from locations.locations_secondary import Casino, Police, Shaurburgers
 from locations.metro import Metro
 from schemas.alley import EnemySearchType, ResetTimerType
 from schemas.player import RestoreEnergyType
@@ -36,69 +36,70 @@ driver = log_in(driver, credentials)
 
 # Player test
 player = Player(driver, update_info_on_init=True)
-player.update_health_and_energy()
-player.update_stats()
-player.update_major_status()
-player.open()
-player.update_recourses_basic()
-player.update_recourses_advanced()
-player.update_recourses_inventory()
-player.update_actvities_status_blocking()
-player.update_actvities_status_non_blocking()
-player.show_player_info(show_all=True)
-player.restore_health()
-player.restore_energy(restore_by=RestoreEnergyType.TONUS)
-player.restore_energy(restore_by=RestoreEnergyType.ORE)
-
-# player.use_item("Полезный пельмень", 140)
+# player.update_health_and_energy()
+# player.update_stats()
+# player.update_major_status()
+# player.open()
+# player.update_recourses_basic()
+# player.update_recourses_advanced()
+# player.update_recourses_inventory()
+# player.update_actvities_status_blocking()
+# player.update_actvities_status_non_blocking()
+# player.show_player_info(show_all=True)
+# player.restore_health()
+# player.restore_energy(restore_by=RestoreEnergyType.TONUS)
+# player.restore_energy(restore_by=RestoreEnergyType.ORE)
+# player.use_item("Полезный пельмень", 140) - TODO: fix item usage
 
 # Alley test
 alley = Alley(player, driver)
-alley.open()
+# alley.open()
 
-alley.is_patrol_active()
-alley.get_patrol_time_left()
-alley.start_patrol(40)
+# alley.is_patrol_active()
+# alley.get_patrol_time_left()
+# alley.start_patrol(40)
 
-alley.is_caravan_available()
-alley.rob_caravan()
+# alley.is_caravan_available()
+# alley.rob_caravan()
 
-alley.is_TV_active()
-alley.get_TV_time_left()
-alley.start_watching_TV(1)
+# alley.is_TV_active()
+# alley.get_TV_time_left()
+# alley.start_watching_TV(1)
 
-alley.is_rest_active()
-alley.reset_rest_timer(ResetTimerType.ENERGY)
-alley.start_enemy_search(EnemySearchType.BY_LEVEL, enemy_level_min=16, enemy_level_max=16)
-alley.finish_enemy_search()
+# alley.is_rest_active()
+# alley.reset_rest_timer(ResetTimerType.ENERGY)
+# alley.start_enemy_search(EnemySearchType.BY_LEVEL, enemy_level_min=16, enemy_level_max=16)
+# alley.finish_enemy_search()
 
-for i in range(10):
-    if alley.is_rest_active():
-        alley.reset_rest_timer(ResetTimerType.SNICKERS)
-    alley.start_enemy_search(EnemySearchType.BY_LEVEL, enemy_level_min=16, enemy_level_max=16)
-    alley.finish_enemy_search()
+# for i in range(10):
+#     if alley.is_rest_active():
+#         alley.reset_rest_timer(ResetTimerType.SNICKERS)
+#     alley.start_enemy_search(EnemySearchType.BY_LEVEL, enemy_level_min=16, enemy_level_max=16)
+#     alley.finish_enemy_search()
 
 # Shaurburgers test
 shaurburgers = Shaurburgers(player, driver)
-shaurburgers.open()
+# shaurburgers.open()
 
-shaurburgers.is_work_active()
-shaurburgers.get_work_time_left()
-shaurburgers.start_work_shift(2)
-
-driver.find_element(By.XPATH, '//div[text()="Патрулировать — "]').text
+# shaurburgers.is_work_active()
+# shaurburgers.get_work_time_left()
+# shaurburgers.start_work_shift(2)
 
 # Casino test
 casino = Casino(player, driver)
-casino.open()
+# casino.open()
 
-casino.get_player_chips_amount()
-casino.buy_chips(20)
+# casino.get_player_chips_amount()
+# casino.buy_chips(20)
 
 
 # Police test
 police = Police(player, driver)
-# police.open()
+police.open()
+
+police.are_connections_established()
+police.establish_connections()
+
 
 # NightClub test
 nightclub = NightClub(player, driver)

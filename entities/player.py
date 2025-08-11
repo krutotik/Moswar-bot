@@ -136,6 +136,7 @@ class Player:
 
         # Player statuses
         self.is_major = False
+        self.has_police_connections = True
         self.on_rest = False
         self.on_patrol = False
         self.on_work = False
@@ -469,6 +470,7 @@ class Player:
             f"Работает: {'Да' if self.on_work else 'Нет'}",
             f"Смотрит Патриот-ТВ: {'Да' if self.on_TV else 'Нет'}",
             f"Статус мажора: {'Да' if self.is_major else 'Нет'}",
+            f"Cвязи с полицией: {'Да' if self.has_police_connections else 'Нет'}",
             "",
             "Количество оставшегося времени на актиновсти:",
             f"Патрулирование: {self.patrol_time_left} минут",

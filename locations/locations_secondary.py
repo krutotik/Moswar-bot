@@ -202,8 +202,12 @@ class Casino:
         """
         Get the current number of chips the player has in the casino.
         """
-        amount = int(self.driver.find_element(*self.LOCATORS["chips_balance"]).text.replace(",", ""))
-        self.player.casino_chips = amount
+        try:
+            amount = int(self.driver.find_element(*self.LOCATORS["chips_balance"]).text.replace(",", ""))
+            self.player.casino_chips = amount
+        except NoSuchElementException:
+            amount = -9999
+            logger.error("Can't get chips amount, element not found.")
         return amount
 
     @require_location_page
@@ -252,6 +256,9 @@ class Police:
     """
 
     BASE_URL = "https://www.moswar.ru/police/"
+    LOCATORS: dict[str, tuple[str, str]] = {
+        "connections_establish": (By.XPATH, '//div[starts-with(text(), "Наладить связи —")]')
+    }
 
     def __init__(self, player: Player, driver: WebDriver):
         """
@@ -264,11 +271,17 @@ class Police:
         self.player = player
         self.driver = driver
 
+    def is_opened(self) -> bool:
+        """
+        Check if the driver is currently on the Police page.
+        """
+        return self.driver.current_url == self.BASE_URL
+
     def open(self) -> None:
         """
-        This method ensures the driver is on the police page by navigating to its URL.
+        Ensure the driver is on the police page, navigating or refreshing as needed.
         """
-        if self.driver.current_url != self.BASE_URL:
+        if not self.is_opened():
             logger.info("Driver is not on the police page. Going to the police.")
             self.driver.get(self.BASE_URL)
             random_delay()
@@ -277,15 +290,38 @@ class Police:
             self.driver.refresh()
             random_delay()
 
-    # TODO: implement function for establishing police connections
+    def are_connections_established(self) -> bool:
+        """
+        Return True if the player has established police connections, else False.
+        """
+        try:
+            self.driver.find_element(*self.LOCATORS["connections_establish"])
+            self.player.has_police_connections = False
+            return False
+        except NoSuchElementException:
+            self.player.has_police_connections = True
+            return True
+
+    @require_location_page
     def establish_connections(self) -> None:
         """
-        TBA
+        Establish police connections.
         """
         logger.info("Establishing police connections.")
-        self.open()
 
-        pass
+        if self.are_connections_established():
+            logger.error("Can't establish connections, player already has them.")
+            return None
+
+        self.driver.find_element(*self.LOCATORS["connections_establish"]).click()
+
+        random_delay(min_time=5, max_time=6)
+        if self.are_connections_established():
+            self.player.has_police_connections = True
+            logger.info("Police connections established successfully.")
+        else:
+            logger.error("Failed to establish police connections.")
+            self.player.has_police_connections = False
 
 
 class NightClub:
