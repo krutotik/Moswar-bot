@@ -1,7 +1,7 @@
 from selenium.webdriver.chrome.options import Options
 
 
-def set_options():
+def set_options() -> Options:
     """
     Sets up and returns browser options for the Selenium WebDriver.
 
