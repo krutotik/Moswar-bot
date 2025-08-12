@@ -119,7 +119,9 @@ factory.open(FactoryPage.BRONEVIK)
 factory.check_current_details_name()
 factory.buy_current_details()
 
-driver.find_element(By.XPATH, '//div[text()="забрать"]').text
+driver.find_element(By.XPATH, "//p[contains(text(), 'Связи налажены до')]").text.split(sep=" ", maxsplit=3)[
+    -1
+]
 
 
 # Home test

@@ -10,6 +10,7 @@ from entities.player import Player
 from schemas.locations_secondary import FactoryPage
 from utils.custom_logging import logger
 from utils.decorators import require_location_page, require_page_prefix
+from utils.general import parse_date
 from utils.human_simulation import random_delay
 
 
@@ -257,7 +258,8 @@ class Police:
 
     BASE_URL = "https://www.moswar.ru/police/"
     LOCATORS: dict[str, tuple[str, str]] = {
-        "connections_establish": (By.XPATH, '//div[starts-with(text(), "Наладить связи —")]')
+        "connections_establish": (By.XPATH, '//div[starts-with(text(), "Наладить связи —")]'),
+        "connections_status": (By.XPATH, "//p[contains(text(), 'Связи налажены до')]"),
     }
 
     def __init__(self, player: Player, driver: WebDriver):
@@ -290,19 +292,21 @@ class Police:
             self.driver.refresh()
             random_delay()
 
-    # TODO: also update expiration date
     @require_page_prefix("https://www.moswar.ru/police/")
     def are_connections_established(self) -> bool:
         """
         Return True if the player has established police connections, else False.
         """
         try:
-            self.driver.find_element(*self.LOCATORS["connections_establish"])
-            self.player.police_is_active = False
-            return False
-        except NoSuchElementException:
+            connections_status = self.driver.find_element(*self.LOCATORS["connections_status"]).text
+            date_str = connections_status.split(sep=" ", maxsplit=3)[-1]
+            self.player.police_expiration_date = parse_date(date_str)
             self.player.police_is_active = True
             return True
+        except NoSuchElementException:
+            self.player.police_expiration_date = None
+            self.player.police_is_active = False
+            return False
 
     @require_location_page
     def establish_connections(self) -> None:
@@ -312,18 +316,18 @@ class Police:
         logger.info("Establishing police connections.")
 
         if self.are_connections_established():
-            logger.error("Can't establish connections, player already has them.")
+            logger.error(
+                f"Can't establish connections, already established until {self.player.police_expiration_date}."
+            )
             return None
 
         self.driver.find_element(*self.LOCATORS["connections_establish"]).click()
+        random_delay()
 
-        random_delay(min_time=5, max_time=6)
         if self.are_connections_established():
-            self.player.police_is_active = True
             logger.info("Police connections established successfully.")
         else:
             logger.error("Failed to establish police connections.")
-            self.player.police_is_active = False
 
 
 class NightClub:

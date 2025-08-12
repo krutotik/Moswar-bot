@@ -263,6 +263,7 @@ class Player:
         except NoSuchElementException as e:
             logger.error(f"Error updating player stats: {e}")
 
+    # TODO: move to Stash class
     def update_major_status(self) -> None:
         """
         Updates the information about player's "major" status based on data from the stash page.
