@@ -339,7 +339,7 @@ class NightClub:
     BASE_URL = "https://www.moswar.ru/nightclub/"
     LOCATORS: dict[str, tuple[str, str]] = {
         "tattoo_timer": (By.XPATH, '//p[contains(text(), "До следующей печати")]/span[@class="timer"]'),
-        "tattoo_get": (By.XPATH, "TBA"),
+        "tattoo_get": (By.XPATH, '//div[text()="забрать"]'),
     }
 
     def __init__(self, player: Player, driver: WebDriver):
@@ -398,17 +398,27 @@ class NightClub:
             self.player.tattoo_availability_date = datetime.now() + timedelta(seconds=time_seconds)
             return False
 
-    # TODO: finish when button is available
     @require_location_page
     def get_tattoo(self) -> None:
         """
-        Get a tattoo if available (to be implemented).
+        Get a tattoo if available.
         """
         logger.info("Getting tattoo.")
-        # Future implementation goes here
-        pass
+
+        if not self.is_tattoo_availiable():
+            logger.error("Can't get tattoo, player can't take new tattoos now.")
+            return None
+
+        self.driver.find_element(*self.LOCATORS["tattoo_get"]).click()
+        random_delay()
+
+        if not self.is_tattoo_availiable():
+            logger.info("Tattoo successfully taken.")
+        else:
+            logger.error("Failed to take tattoo")
 
 
+# TODO: finish
 class Factory:
     """
     Represents the 'Factory' in the game and provides methods for interacting with it.

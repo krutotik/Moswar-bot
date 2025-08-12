@@ -37,6 +37,9 @@
 ## Home
 - Fully refactor
 
+## Pets
+- Full rework
+
 # DONE
 - Shaurburgers
 - Casino 
