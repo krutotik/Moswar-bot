@@ -437,9 +437,9 @@ class Factory:
     LOCATORS: dict[str, tuple[str, str]] = {
         "petrics_amt": (By.XPATH, "//*[contains(text(), 'В наличии')]//span[@class='petric']"),
         "petrics_amt_to_be_produced": (By.XPATH, '//*[@id="factory_petrik_1"]//span[@class="petric"]'),
-        "petrics_produce_timer": (By.XPATH, "TBA"),
+        "petrics_produce_timer": (By.XPATH, "TBA"),  # TODO: TBA
         "petrics_produce_no_timer": (By.XPATH, '//div[contains(text(), "Сделать моментально")]'),
-        "petrics_in_production": (By.XPATH, "TBA"),
+        "petrics_in_production": (By.XPATH, "TBA"),  # TODO: TBA
         "bronevik_open": (By.XPATH, "//a[@href='/factory/build/bronevik/']"),
         "bronevik_details_img": (By.XPATH, "//div[@class='exchange']//div[@class='get']//img"),
         "bronevik_details_buy": (By.XPATH, "//button[@id='factory-build-exchange']"),
@@ -510,11 +510,11 @@ class Factory:
 
     # TODO: finish when status is available
     @require_location_page
-    def if_producing_petrics(self) -> None:
+    def if_producing_petrics(self) -> bool:
         """
         Return True if the factory is currently producing 'Петрики', else False.
         """
-        pass
+        return False
 
     # TODO: finish
     @require_location_page
@@ -528,7 +528,30 @@ class Factory:
             logger.error("Can't start producing 'Петрики', already producing.")
             return None
 
-        pass
+        amt_to_be_produced = self.get_petrics_amount_to_be_produced()
+
+        try:
+            current_amt = self.get_current_petrics_amount()
+            self.driver.find_element(*self.LOCATORS["petrics_produce_no_timer"]).click()
+            random_delay()
+
+            if current_amt + amt_to_be_produced == self.get_current_petrics_amount():
+                logger.info(f"{amt_to_be_produced} 'Петрики' successfully produced.")
+                self.player.petrics += amt_to_be_produced
+                self.player.ore -= amt_to_be_produced
+                self.player.money -= amt_to_be_produced * 100
+            else:
+                logger.error("Failed to produce 'Петрики'")
+        except NoSuchElementException:
+            self.driver.find_element(*self.LOCATORS["petrics_produce_timer"]).click()
+            random_delay()
+
+            if self.if_producing_petrics():
+                logger.info(f"Started producing {amt_to_be_produced} 'Петрики'.")
+                self.player.ore -= amt_to_be_produced
+                self.player.money -= amt_to_be_produced * 100
+            else:
+                logger.error("Failed to start producing 'Петрики'.")
 
     # ------------------------
     # BRONEVIK

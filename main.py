@@ -104,21 +104,23 @@ police = Police(player, driver)
 
 # NightClub test
 nightclub = NightClub(player, driver)
-nightclub.open()
+# nightclub.open()
 
-nightclub.is_tattoo_availiable()
+# nightclub.is_tattoo_availiable()
 # nightclub.get_tattoo()
-
-driver.find_element(By.XPATH, "//*[contains(text(), 'В наличии')]//span[@class='petric']").text
 
 # Factory test
 factory = Factory(player, driver)
 factory.open(FactoryPage.BASE)
 factory.get_current_petrics_amount()
 factory.get_petrics_amount_to_be_produced()
+factory.start_producing_petrics()
 factory.open(FactoryPage.BRONEVIK)
 factory.check_current_details_name()
 factory.buy_current_details()
+
+driver.find_element(By.XPATH, '//div[text()="забрать"]').text
+
 
 # Home test
 home = Home(player, driver)
@@ -129,11 +131,6 @@ home.check_mars_trip_timer()
 trainer_vip = TrainerVip(player, driver)
 trainer_vip.check_bojara_timer()
 # trainer_vip.drink_Bojara()
-
-# Routine to update statuses and start activities
-alley = Alley(player, driver)
-shaurburgers = Shaurburgers(player, driver)
-# shaurburgers.start_work_shift(2)
 
 
 # Metro
@@ -149,16 +146,8 @@ pet_gaf = PetForFightMain(player, driver, "Котенок по имени 'ГА�
 pet_gaf.train("loyality")
 
 
-# maybe decorator to add try except?
 # Save session status at the end of each session?
 # mimic more human interactions, description in mimic_human_interactions.md
-# add stop if page change is not working
-# add timestemp when patrol and work will be finished
 # add times when mars/tatoo/bojara will be available
-# add refresh only last refresh was more than a 30 seconds ago
 # ask Chat GPT to check all scripts, what can be improved?
 # ask chat to check if documentation is up to date
-# player use item should use dict of active items, also change counter if used
-# create bluprint for the locations class and then create child classes for each location
-# add decorator to open function which will check the last time driver performed any action on the page, is it possible?
-# check ожидание боя чтобы не пытаться идти в битву когда занят
